@@ -50,11 +50,51 @@ app → pages → widgets → features → entities → shared
 
 ```ts
 // ✅ 올바른 방법
-import { MainLayout } from '@/widgets/main-layout';
+import { MainLayout } from '@widgets/main-layout';
 
 // ❌ 금지
-import { MainLayout } from '@/widgets/main-layout/ui/MainLayout';
+import { MainLayout } from '@widgets/main-layout/ui/MainLayout';
 ```
+
+---
+
+## Import 경로 규칙
+
+### 레이어 간 (Cross-layer) — 절대경로 alias 사용
+
+다른 레이어를 참조할 때는 **레이어별 alias**를 사용합니다.
+
+| Alias         | 경로             |
+| ------------- | ---------------- |
+| `@app/*`      | `src/app/*`      |
+| `@pages/*`    | `src/pages/*`    |
+| `@widgets/*`  | `src/widgets/*`  |
+| `@features/*` | `src/features/*` |
+| `@entities/*` | `src/entities/*` |
+| `@shared/*`   | `src/shared/*`   |
+
+```ts
+// ✅ 레이어 간 — alias 사용
+import { MainLayout } from '@widgets/main-layout';
+import { http, ENDPOINTS } from '@shared/api';
+import { HomePage } from '@pages/home';
+```
+
+### 슬라이스 내부 (Intra-slice) — 상대경로 사용
+
+같은 슬라이스 안에서는 **상대경로**를 사용합니다.
+슬라이스를 독립적으로 이동·재사용할 수 있도록 하기 위함입니다.
+
+```ts
+// ✅ 슬라이스 내부 — 상대경로
+// shared/api/http.ts 내부
+import { getAccessToken } from './auth';
+import { toApiClientError } from './error';
+```
+
+### `@/*` alias
+
+`@/*` → `src/*` 는 위 규칙에 맞지 않는 예외적인 경우(예: `src/` 루트 파일)에만 사용합니다.
 
 ---
 
@@ -97,7 +137,7 @@ src/
 axios 인스턴스, 토큰, 에러 처리, 공통 타입을 제공합니다.
 
 ```ts
-import { http, ENDPOINTS, unwrapApiResponse } from '@/shared/api';
+import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 
 const response = await http.get(ENDPOINTS.health);
 const data = unwrapApiResponse(response.data);

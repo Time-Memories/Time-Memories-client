@@ -3,8 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 
-import './app/styles/index.css';
-import App from './app';
+import '@app/styles/index.css';
+import App from '@app';
 
 const isProd = import.meta.env.MODE === 'production';
 
