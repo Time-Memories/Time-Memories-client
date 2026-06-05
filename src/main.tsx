@@ -3,9 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 
-import './index.css';
-import App from './App.tsx';
-import AppProviders from './providers/AppProviders.tsx';
+import './app/styles/index.css';
+import App from './app';
 
 const isProd = import.meta.env.MODE === 'production';
 
@@ -25,8 +24,6 @@ const root = createRoot(container, {
 
 root.render(
   <StrictMode>
-    <AppProviders>
-      <App />
-    </AppProviders>
+    <App />
   </StrictMode>,
 );

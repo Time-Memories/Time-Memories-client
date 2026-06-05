@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import MainLayout from '@/components/layouts/MainLayout';
-import HomePage from '@/pages/HomePage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import { MainLayout } from '@/widgets/main-layout';
+import { HomePage } from '@/pages/home';
+import { NotFoundPage } from '@/pages/not-found';
 
-export default function App() {
+export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
