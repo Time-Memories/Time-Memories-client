@@ -1,9 +1,4 @@
-export interface RoomMember {
-  id: string;
-  name: string;
-  color: string;
-  isMe?: boolean;
-}
+import type { RoomMember } from '@entities/room';
 
 export interface MemberListSheetProps {
   members: RoomMember[];

@@ -5,3 +5,10 @@ export interface RoomInfo {
   memberCount: number;
   memberColors: string[];
 }
+
+export interface RoomMember {
+  id: string;
+  name: string;
+  color: string;
+  isMe?: boolean;
+}

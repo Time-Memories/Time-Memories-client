@@ -2,10 +2,11 @@ import { User } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { JoinRoomModal } from '@features/join-room';
+import { CalendarView } from '@widgets/diary-calendar';
+import { RoomListView } from '@widgets/room-list';
+
 import type { ViewTab } from '../model/types';
-import { CalendarView } from './CalendarView';
-import { JoinRoomModal } from './JoinRoomModal';
-import { RoomListView } from './RoomListView';
 import { TabSwitcher } from './TabSwitcher';
 
 export default function HomePage() {

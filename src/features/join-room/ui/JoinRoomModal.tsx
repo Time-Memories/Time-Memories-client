@@ -32,7 +32,7 @@ export const JoinRoomModal = ({ onClose, onJoin }: JoinRoomModalProps) => {
           </button>
         </div>
 
-        <p className="text-[#4b5563] text-[13px] leading-[20px] -mt-1">
+        <p className="text-[#4b5563] text-[13px] leading-5 -mt-1">
           친구에게 방 코드를 공유받으세요!
         </p>
 
@@ -43,7 +43,7 @@ export const JoinRoomModal = ({ onClose, onJoin }: JoinRoomModalProps) => {
           onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
           placeholder="방 코드를 입력하세요"
           maxLength={10}
-          className="bg-[#f5f6f8] border border-[#e5e7eb] rounded-[12px] px-4 py-[13px] text-[14px] text-[#1c2333] placeholder:text-[#9ca3af] outline-none tracking-widest font-mono text-center"
+          className="bg-[#f5f6f8] border border-[#e5e7eb] rounded-xl px-4 py-3.25 text-[14px] text-[#1c2333] placeholder:text-[#9ca3af] outline-none tracking-widest font-mono text-center"
           autoFocus
         />
 

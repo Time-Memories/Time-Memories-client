@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { RoomInfo } from '@entities/room';
+import type { RoomInfo, RoomMember } from '@entities/room';
 import { ChatView } from '@features/chat';
 import { InviteSheet } from '@widgets/invite-sheet';
 import { MemberListSheet } from '@widgets/member-list-sheet';
-import type { RoomMember } from '@widgets/member-list-sheet';
 import { DiaryListView } from '@widgets/diary-list';
 import { RoomHeader } from '@widgets/room-header';
 
