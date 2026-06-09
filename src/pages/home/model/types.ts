@@ -10,7 +10,7 @@ export interface PrivateDiary {
   count: number;
 }
 
-export interface DiaryEntry {
+export interface CalendarDiaryEntry {
   id: string;
   title: string;
   roomName: string;

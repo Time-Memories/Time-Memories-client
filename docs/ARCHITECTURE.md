@@ -112,7 +112,7 @@ src/
 │   └── index.tsx                 # 루트 App 컴포넌트
 ├── pages/
 │   ├── home/
-│   │   ├── model/types.ts        # HomeTab 등 페이지 UI 상태
+│   │   ├── model/types.ts        # ViewTab, Room, CalendarDiaryEntry 등 페이지 UI 상태
 │   │   ├── ui/
 │   │   │   ├── HomePage.tsx
 │   │   │   ├── CalendarView.tsx
@@ -124,8 +124,15 @@ src/
 │   ├── room/
 │   │   ├── model/types.ts        # RoomView ('diary' | 'chat') UI 상태
 │   │   ├── ui/
-│   │   │   ├── RoomPage.tsx
-│   │   │   └── InviteSheet.tsx   # widgets/invite-sheet re-export
+│   │   │   └── RoomPage.tsx
+│   │   └── index.ts
+│   ├── diary-detail/
+│   │   ├── ui/
+│   │   │   └── DiaryDetailPage.tsx
+│   │   └── index.ts
+│   ├── diary-write/
+│   │   ├── ui/
+│   │   │   └── DiaryWritePage.tsx
 │   │   └── index.ts
 │   └── not-found/
 │       ├── ui/NotFoundPage.tsx
@@ -149,7 +156,7 @@ src/
 │       └── index.ts
 ├── entities/
 │   ├── diary/
-│   │   ├── model/types.ts        # DiaryEntry
+│   │   ├── model/types.ts        # DiaryEntry, DiaryComment, DiaryDetail
 │   │   ├── ui/DiaryEntryCard.tsx
 │   │   └── index.ts
 │   ├── room/

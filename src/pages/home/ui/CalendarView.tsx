@@ -1,7 +1,7 @@
 import { Lock, Users } from 'lucide-react';
 import { useState } from 'react';
 
-import type { DiaryEntry } from '../model/types';
+import type { CalendarDiaryEntry } from '../model/types';
 import { MiniCalendar } from './MiniCalendar';
 
 const today = new Date();
@@ -12,7 +12,7 @@ const makeDate = (daysAgo: number) => {
   return d;
 };
 
-const MOCK_DIARY_ENTRIES: DiaryEntry[] = [
+const MOCK_DIARY_ENTRIES: CalendarDiaryEntry[] = [
   {
     id: '1',
     title: '제주도 여행 첫날',
