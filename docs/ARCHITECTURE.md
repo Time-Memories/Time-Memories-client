@@ -112,17 +112,59 @@ src/
 │   └── index.tsx                 # 루트 App 컴포넌트
 ├── pages/
 │   ├── home/
-│   │   ├── ui/HomePage.tsx
+│   │   ├── model/types.ts        # ViewTab, Room, CalendarDiaryEntry 등 페이지 UI 상태
+│   │   ├── ui/
+│   │   │   ├── HomePage.tsx
+│   │   │   ├── CalendarView.tsx
+│   │   │   ├── MiniCalendar.tsx
+│   │   │   ├── MemberAvatars.tsx
+│   │   │   ├── RoomListView.tsx
+│   │   │   └── TabSwitcher.tsx
+│   │   └── index.ts
+│   ├── room/
+│   │   ├── model/types.ts        # RoomView ('diary' | 'chat') UI 상태
+│   │   ├── ui/
+│   │   │   └── RoomPage.tsx
+│   │   └── index.ts
+│   ├── diary-detail/
+│   │   ├── ui/
+│   │   │   └── DiaryDetailPage.tsx
+│   │   └── index.ts
+│   ├── diary-write/
+│   │   ├── ui/
+│   │   │   └── DiaryWritePage.tsx
 │   │   └── index.ts
 │   └── not-found/
 │       ├── ui/NotFoundPage.tsx
 │       └── index.ts
 ├── widgets/
-│   └── main-layout/
-│       ├── ui/MainLayout.tsx
+│   ├── main-layout/
+│   │   ├── ui/MainLayout.tsx
+│   │   └── index.ts
+│   ├── invite-sheet/
+│   │   ├── ui/InviteSheet.tsx    # 방 초대 바텀시트
+│   │   └── index.ts
+│   ├── room-header/
+│   │   ├── ui/RoomHeader.tsx     # 방 화면 상단 헤더
+│   │   └── index.ts
+│   └── diary-list/
+│       ├── ui/DiaryListView.tsx  # 일기 목록 + FAB
 │       └── index.ts
-├── features/                     # (비어있음)
-├── entities/                     # (비어있음)
+├── features/
+│   └── chat/
+│       ├── ui/ChatView.tsx       # 채팅 메시지 목록 + 전송
+│       └── index.ts
+├── entities/
+│   ├── diary/
+│   │   ├── model/types.ts        # DiaryEntry, DiaryComment, DiaryDetail
+│   │   ├── ui/DiaryEntryCard.tsx
+│   │   └── index.ts
+│   ├── room/
+│   │   ├── model/types.ts        # RoomInfo
+│   │   └── index.ts
+│   └── message/
+│       ├── model/types.ts        # ChatMessage
+│       └── index.ts
 └── shared/
     ├── api/                      # axios 클라이언트, 토큰, 에러 처리
     ├── ui/                       # (비어있음)
