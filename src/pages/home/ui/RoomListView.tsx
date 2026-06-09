@@ -1,7 +1,12 @@
 import { Lock, Plus, UserPlus, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import type { PrivateDiary, Room } from '../model/types';
 import { MemberAvatars } from './MemberAvatars';
+
+interface RoomListViewProps {
+  onJoinRoom: () => void;
+}
 
 const MOCK_ROOMS: Room[] = [
   {
@@ -24,14 +29,19 @@ const MOCK_PRIVATE_DIARIES: PrivateDiary[] = [
   },
 ];
 
-export const RoomListView = () => {
+export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col gap-[8px] flex-1 overflow-auto px-[18px] py-[14px] bg-[#f5f6f8]">
       <div className="grid grid-cols-2 gap-[8px] shrink-0">
         <button className="bg-[#1c2333] border border-[#1c2333] rounded-[14px] flex items-center justify-center gap-[8px] text-white text-[14px] font-semibold h-[66px] hover:opacity-90 transition-opacity">
           <Plus size={16} color="white" strokeWidth={2} />방 만들기
         </button>
-        <button className="bg-white border border-[#e5e7eb] rounded-[14px] flex items-center justify-center gap-[8px] text-[#1c2333] text-[14px] font-semibold h-[66px] hover:bg-[#f9fafb] transition-colors">
+        <button
+          onClick={onJoinRoom}
+          className="bg-white border border-[#e5e7eb] rounded-[14px] flex items-center justify-center gap-[8px] text-[#1c2333] text-[14px] font-semibold h-[66px] hover:bg-[#f9fafb] transition-colors"
+        >
           <UserPlus size={16} color="#1c2333" strokeWidth={1.5} />방 참여하기
         </button>
       </div>
@@ -45,6 +55,7 @@ export const RoomListView = () => {
       {MOCK_ROOMS.map((room) => (
         <button
           key={room.id}
+          onClick={() => navigate(`/rooms/${room.id}`)}
           className="bg-white border border-[#eceef2] rounded-[12px] flex items-center justify-between px-[17px] py-[15px] shrink-0 text-left hover:bg-[#fafbfc] transition-colors"
         >
           <span className="text-[#1c2333] text-[14.6px] font-medium">{room.name}</span>
