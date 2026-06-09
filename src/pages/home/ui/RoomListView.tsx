@@ -35,7 +35,10 @@ export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
   return (
     <div className="flex flex-col gap-[8px] flex-1 overflow-auto px-[18px] py-[14px] bg-[#f5f6f8]">
       <div className="grid grid-cols-2 gap-[8px] shrink-0">
-        <button className="bg-[#1c2333] border border-[#1c2333] rounded-[14px] flex items-center justify-center gap-[8px] text-white text-[14px] font-semibold h-[66px] hover:opacity-90 transition-opacity">
+        <button
+          onClick={() => navigate('/rooms/new')}
+          className="bg-[#1c2333] border border-[#1c2333] rounded-[14px] flex items-center justify-center gap-2 text-white text-[14px] font-semibold h-16.5 hover:opacity-90 transition-opacity"
+        >
           <Plus size={16} color="white" strokeWidth={2} />방 만들기
         </button>
         <button
