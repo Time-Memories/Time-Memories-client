@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { isSameDay } from '@shared/lib';
+
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'];
 
 export interface MiniCalendarProps {
@@ -29,11 +31,6 @@ export const MiniCalendar = ({
   ];
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const isSameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
   const isToday = (day: number) => isSameDay(new Date(year, month, day), today);
 
   const isFuture = (day: number) => {
@@ -51,12 +48,12 @@ export const MiniCalendar = ({
     selectedDate ? isSameDay(selectedDate, new Date(year, month, day)) : false;
 
   return (
-    <div className="px-[14px] pt-[10px]">
-      <div className="flex items-center justify-between pb-[10px] pt-[6px] px-[4px]">
+    <div className="px-3.5 pt-2.5">
+      <div className="flex items-center justify-between pb-2.5 pt-1.5 px-1">
         <span className="text-[#1c2333] text-[15px] font-bold">
           {year}년 {month + 1}월
         </span>
-        <div className="flex items-center gap-[14px]">
+        <div className="flex items-center gap-3.5">
           <button
             onClick={() => setViewDate(new Date(year, month - 1, 1))}
             className="text-[#4b5563] text-[14px] leading-none px-1"
@@ -72,7 +69,7 @@ export const MiniCalendar = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 mb-[6px]">
+      <div className="grid grid-cols-7 mb-1.5">
         {WEEKDAYS.map((day) => (
           <div key={day} className="flex justify-center">
             <span className="text-[#9ca3af] text-[11px]">{day}</span>
@@ -80,7 +77,7 @@ export const MiniCalendar = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-y-[4px]">
+      <div className="grid grid-cols-7 gap-y-1">
         {cells.map((day, index) => {
           if (day === null) return <div key={index} />;
 
@@ -95,7 +92,7 @@ export const MiniCalendar = ({
             <button
               key={index}
               onClick={() => onDateSelect?.(new Date(year, month, day))}
-              className={`relative flex flex-col items-center justify-center py-[10.5px] rounded-[8px] ${
+              className={`relative flex flex-col items-center justify-center py-[10.5px] rounded-lg ${
                 highlighted ? 'bg-[#1c2333]' : todayDay ? 'bg-[#f5f6f8]' : ''
               }`}
             >

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { RoomInfo } from '@entities/room';
+import type { RoomInfo, RoomMember } from '@entities/room';
 import { ChatView } from '@features/chat';
+import { InviteSheet } from '@widgets/invite-sheet';
+import { MemberListSheet } from '@widgets/member-list-sheet';
 import { DiaryListView } from '@widgets/diary-list';
 import { RoomHeader } from '@widgets/room-header';
 
@@ -16,16 +18,34 @@ const MOCK_ROOM: RoomInfo = {
   memberColors: ['#fde2dc', '#dde7f6', '#e5e7eb'],
 };
 
+const MOCK_MEMBERS: RoomMember[] = [
+  { id: '1', name: '나', color: '#dde7f6', isMe: true },
+  { id: '2', name: '민호', color: '#fde2dc' },
+  { id: '3', name: '수아', color: '#e5e7eb' },
+];
+
 export default function RoomPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [view, setView] = useState<RoomView>('diary');
+  const [showInviteSheet, setShowInviteSheet] = useState(false);
+  const [showMemberSheet, setShowMemberSheet] = useState(false);
 
   const handleBack = () => {
     if (view === 'chat') {
       setView('diary');
     } else {
       navigate('/');
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(MOCK_ROOM.code).catch(() => {});
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ text: MOCK_ROOM.code }).catch(() => {});
     }
   };
 
@@ -36,7 +56,7 @@ export default function RoomPage() {
         variant={view}
         memberCount={MOCK_ROOM.memberCount}
         onBack={handleBack}
-        onMore={() => {}}
+        onMore={() => (view === 'chat' ? setShowMemberSheet(true) : navigate('/settings'))}
       />
 
       {view === 'diary' ? (
@@ -44,9 +64,25 @@ export default function RoomPage() {
           onChatOpen={() => setView('chat')}
           onAddDiary={() => navigate(`/rooms/${roomId}/diaries/new`)}
           onDiaryClick={(id) => navigate(`/rooms/${roomId}/diaries/${id}`)}
+          onInvite={() => setShowInviteSheet(true)}
         />
       ) : (
         <ChatView />
+      )}
+
+      {showMemberSheet && (
+        <MemberListSheet members={MOCK_MEMBERS} onClose={() => setShowMemberSheet(false)} />
+      )}
+
+      {showInviteSheet && (
+        <InviteSheet
+          roomCode={MOCK_ROOM.code}
+          memberCount={MOCK_ROOM.memberCount}
+          memberColors={MOCK_ROOM.memberColors}
+          onClose={() => setShowInviteSheet(false)}
+          onCopy={handleCopy}
+          onShare={handleShare}
+        />
       )}
     </div>
   );

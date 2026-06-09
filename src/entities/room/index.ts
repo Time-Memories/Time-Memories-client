@@ -1,1 +1,1 @@
-export type { RoomInfo } from './model/types';
+export type { RoomInfo, RoomMember } from './model/types';

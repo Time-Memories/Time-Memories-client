@@ -1,6 +1,8 @@
 import { Lock, Users } from 'lucide-react';
 import { useState } from 'react';
 
+import { formatMonthDay, isSameDay } from '@shared/lib';
+
 import type { CalendarDiaryEntry } from '../model/types';
 import { MiniCalendar } from './MiniCalendar';
 
@@ -31,22 +33,11 @@ const MOCK_DIARY_ENTRIES: CalendarDiaryEntry[] = [
 
 const MARKED_DATES = MOCK_DIARY_ENTRIES.map((e) => e.date);
 
-const formatDate = (date: Date) => {
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${m}.${d}`;
-};
-
 export const CalendarView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const visibleEntries = selectedDate
-    ? MOCK_DIARY_ENTRIES.filter(
-        (e) =>
-          e.date.getFullYear() === selectedDate.getFullYear() &&
-          e.date.getMonth() === selectedDate.getMonth() &&
-          e.date.getDate() === selectedDate.getDate(),
-      )
+    ? MOCK_DIARY_ENTRIES.filter((e) => isSameDay(e.date, selectedDate))
     : MOCK_DIARY_ENTRIES;
 
   return (
@@ -59,20 +50,17 @@ export const CalendarView = () => {
         }
       />
 
-      <div className="border-t border-[#eceef2] mt-[10px]">
-        <div className="px-[16px] pt-[29px] pb-[6px]">
+      <div className="border-t border-[#eceef2] mt-2.5">
+        <div className="px-4 pt-[29px] pb-1.5">
           <span className="text-[#4b5563] text-[11.4px] font-medium">이번 달 일기</span>
         </div>
 
         <div className="flex flex-col divide-y divide-[#eceef2]">
           {visibleEntries.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex items-start justify-between px-[16px] pb-[8px] pt-[9px]"
-            >
-              <div className="flex flex-col gap-[4px]">
+            <div key={entry.id} className="flex items-start justify-between px-4 pb-2 pt-[9px]">
+              <div className="flex flex-col gap-1">
                 <span className="text-[#1c2333] text-[13.3px] font-bold">{entry.title}</span>
-                <div className="flex items-center gap-[2px]">
+                <div className="flex items-center gap-0.5">
                   {entry.isPrivate ? (
                     <Lock size={11} color="#9ca3af" strokeWidth={1.5} />
                   ) : (
@@ -81,12 +69,14 @@ export const CalendarView = () => {
                   <span className="text-[#9ca3af] text-[11px]"> {entry.roomName}</span>
                 </div>
               </div>
-              <span className="text-[#9ca3af] text-[11px] font-mono">{formatDate(entry.date)}</span>
+              <span className="text-[#9ca3af] text-[11px] font-mono">
+                {formatMonthDay(entry.date)}
+              </span>
             </div>
           ))}
 
           {visibleEntries.length === 0 && (
-            <div className="px-[16px] py-[24px] text-center text-[#9ca3af] text-[13px]">
+            <div className="px-4 py-6 text-center text-[#9ca3af] text-[13px]">
               이 날의 일기가 없어요
             </div>
           )}
