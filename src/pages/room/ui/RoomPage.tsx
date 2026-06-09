@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import type { RoomInfo, RoomView } from '../model/types';
-import { ChatView } from './ChatView';
-import { DiaryListView } from './DiaryListView';
-import { RoomHeader } from './RoomHeader';
+import type { RoomInfo } from '@entities/room';
+import { ChatView } from '@features/chat';
+import { DiaryListView } from '@widgets/diary-list';
+import { RoomHeader } from '@widgets/room-header';
+
+import type { RoomView } from '../model/types';
 
 const MOCK_ROOM: RoomInfo = {
   id: '1',

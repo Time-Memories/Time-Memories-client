@@ -1,7 +1,7 @@
 import { MessageCircle, Pencil } from 'lucide-react';
 
-import type { DiaryEntry } from '../model/types';
-import { DiaryEntryCard } from './DiaryEntryCard';
+import type { DiaryEntry } from '@entities/diary';
+import { DiaryEntryCard } from '@entities/diary';
 
 const MOCK_DIARIES: DiaryEntry[] = [
   { id: '1', title: '제주도 여행 첫날', author: '지원', date: '05.15', thumbnailColor: '#fde2dc' },

@@ -1,7 +1,7 @@
 import { SendHorizontal } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import type { ChatMessage } from '../model/types';
+import type { ChatMessage } from '@entities/message';
 
 const MOCK_MESSAGES: ChatMessage[] = [
   {
