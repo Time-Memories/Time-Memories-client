@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import type { RoomInfo } from '@entities/room';
 import { ChatView } from '@features/chat';
@@ -17,6 +17,7 @@ const MOCK_ROOM: RoomInfo = {
 };
 
 export default function RoomPage() {
+  const { roomId } = useParams();
   const navigate = useNavigate();
   const [view, setView] = useState<RoomView>('diary');
 
@@ -24,7 +25,7 @@ export default function RoomPage() {
     if (view === 'chat') {
       setView('diary');
     } else {
-      navigate(-1);
+      navigate('/');
     }
   };
 
@@ -39,7 +40,11 @@ export default function RoomPage() {
       />
 
       {view === 'diary' ? (
-        <DiaryListView onChatOpen={() => setView('chat')} onAddDiary={() => {}} />
+        <DiaryListView
+          onChatOpen={() => setView('chat')}
+          onAddDiary={() => navigate(`/rooms/${roomId}/diaries/new`)}
+          onDiaryClick={(id) => navigate(`/rooms/${roomId}/diaries/${id}`)}
+        />
       ) : (
         <ChatView />
       )}

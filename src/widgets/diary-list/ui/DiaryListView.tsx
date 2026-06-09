@@ -13,9 +13,10 @@ const MOCK_DIARIES: DiaryEntry[] = [
 export interface DiaryListViewProps {
   onChatOpen: () => void;
   onAddDiary: () => void;
+  onDiaryClick: (id: string) => void;
 }
 
-export const DiaryListView = ({ onChatOpen, onAddDiary }: DiaryListViewProps) => {
+export const DiaryListView = ({ onChatOpen, onAddDiary, onDiaryClick }: DiaryListViewProps) => {
   return (
     <div className="relative flex-1 min-h-0">
       <div className="bg-[#f5f6f8] flex flex-col gap-2 h-full overflow-auto pt-[14px] px-[14px] pb-[80px]">
@@ -26,6 +27,7 @@ export const DiaryListView = ({ onChatOpen, onAddDiary }: DiaryListViewProps) =>
             author={diary.author}
             date={diary.date}
             thumbnailColor={diary.thumbnailColor}
+            onClick={() => onDiaryClick(diary.id)}
           />
         ))}
       </div>
