@@ -1,4 +1,4 @@
-import { MessageCircle, Pencil } from 'lucide-react';
+import { MessageCircle, Pencil, UserPlus } from 'lucide-react';
 
 import type { DiaryEntry } from '@entities/diary';
 import { DiaryEntryCard } from '@entities/diary';
@@ -14,9 +14,15 @@ export interface DiaryListViewProps {
   onChatOpen: () => void;
   onAddDiary: () => void;
   onDiaryClick: (id: string) => void;
+  onInvite: () => void;
 }
 
-export const DiaryListView = ({ onChatOpen, onAddDiary, onDiaryClick }: DiaryListViewProps) => {
+export const DiaryListView = ({
+  onChatOpen,
+  onAddDiary,
+  onDiaryClick,
+  onInvite,
+}: DiaryListViewProps) => {
   return (
     <div className="relative flex-1 min-h-0">
       <div className="bg-[#f5f6f8] flex flex-col gap-2 h-full overflow-auto pt-[14px] px-[14px] pb-[80px]">
@@ -33,6 +39,12 @@ export const DiaryListView = ({ onChatOpen, onAddDiary, onDiaryClick }: DiaryLis
       </div>
 
       <div className="absolute bottom-[80px] right-4 flex flex-col gap-2">
+        <button
+          onClick={onInvite}
+          className="bg-white border border-[#e5e7eb] rounded-[18px] flex items-center justify-center size-[52px] shadow-[0px_4px_10px_-2px_rgba(20,30,50,0.15)] hover:bg-[#f9fafb] transition-colors"
+        >
+          <UserPlus size={20} color="#1c2333" strokeWidth={1.5} />
+        </button>
         <button
           onClick={onChatOpen}
           className="bg-white border border-[#e5e7eb] rounded-[18px] flex items-center justify-center size-[52px] shadow-[0px_4px_10px_-2px_rgba(20,30,50,0.15)] hover:bg-[#f9fafb] transition-colors"
