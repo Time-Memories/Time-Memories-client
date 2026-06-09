@@ -1,0 +1,53 @@
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import type { RoomInfo } from '@entities/room';
+import { ChatView } from '@features/chat';
+import { DiaryListView } from '@widgets/diary-list';
+import { RoomHeader } from '@widgets/room-header';
+
+import type { RoomView } from '../model/types';
+
+const MOCK_ROOM: RoomInfo = {
+  id: '1',
+  name: '제주도 여행 🌴',
+  code: 'JEJU24',
+  memberCount: 3,
+  memberColors: ['#fde2dc', '#dde7f6', '#e5e7eb'],
+};
+
+export default function RoomPage() {
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+  const [view, setView] = useState<RoomView>('diary');
+
+  const handleBack = () => {
+    if (view === 'chat') {
+      setView('diary');
+    } else {
+      navigate('/');
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-svh bg-[#f5f6f8] relative">
+      <RoomHeader
+        roomName={MOCK_ROOM.name}
+        variant={view}
+        memberCount={MOCK_ROOM.memberCount}
+        onBack={handleBack}
+        onMore={() => {}}
+      />
+
+      {view === 'diary' ? (
+        <DiaryListView
+          onChatOpen={() => setView('chat')}
+          onAddDiary={() => navigate(`/rooms/${roomId}/diaries/new`)}
+          onDiaryClick={(id) => navigate(`/rooms/${roomId}/diaries/${id}`)}
+        />
+      ) : (
+        <ChatView />
+      )}
+    </div>
+  );
+}
