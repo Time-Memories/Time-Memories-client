@@ -4,9 +4,10 @@ import { unwrapApiResponse } from './error';
 import { ENDPOINTS } from './endpoints';
 
 export interface GetMeResponseBody {
-  id: number;
+  userId: number;
   name: string;
   email: string;
+  createdAt: string;
 }
 
 export async function getMe(): Promise<GetMeResponseBody> {
