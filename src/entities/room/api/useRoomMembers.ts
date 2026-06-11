@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, CursorPaginationParams, CursorPaginationResponse } from '@shared/api';
 import { RoomQueryKeys } from './_keys';
@@ -27,5 +27,12 @@ export function useRoomMembers(roomId: number) {
     queryKey: RoomQueryKeys.members(roomId),
     queryFn: () => getRoomMembers(roomId, { size: 100 }),
     enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseRoomMembers(roomId: number) {
+  return useSuspenseQuery({
+    queryKey: RoomQueryKeys.members(roomId),
+    queryFn: () => getRoomMembers(roomId, { size: 100 }),
   });
 }

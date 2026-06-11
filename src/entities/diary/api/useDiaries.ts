@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, PagePaginationParams, PagePaginationResponse } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -28,5 +28,12 @@ export function useDiaries(roomId: number, page = 0, size = 20) {
     queryKey: [...DiaryQueryKeys.listsByRoom(roomId), page],
     queryFn: () => getDiaries(roomId, { page, size }),
     enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseDiaries(roomId: number, page = 0, size = 20) {
+  return useSuspenseQuery({
+    queryKey: [...DiaryQueryKeys.listsByRoom(roomId), page],
+    queryFn: () => getDiaries(roomId, { page, size }),
   });
 }

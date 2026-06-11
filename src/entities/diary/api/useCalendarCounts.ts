@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -30,5 +30,12 @@ export function useCalendarCounts(year: number, month: number) {
     queryKey: DiaryQueryKeys.calendarCounts(year, month),
     queryFn: () => getCalendarCounts({ year, month }),
     enabled: year > 0 && month > 0,
+  });
+}
+
+export function useSuspenseCalendarCounts(year: number, month: number) {
+  return useSuspenseQuery({
+    queryKey: DiaryQueryKeys.calendarCounts(year, month),
+    queryFn: () => getCalendarCounts({ year, month }),
   });
 }

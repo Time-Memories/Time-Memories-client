@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, CursorPaginationParams } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -27,5 +27,12 @@ export function useComments(diaryId: number) {
     queryKey: DiaryQueryKeys.comments(diaryId),
     queryFn: () => getComments(diaryId, { size: 100 }),
     enabled: diaryId > 0,
+  });
+}
+
+export function useSuspenseComments(diaryId: number) {
+  return useSuspenseQuery({
+    queryKey: DiaryQueryKeys.comments(diaryId),
+    queryFn: () => getComments(diaryId, { size: 100 }),
   });
 }
