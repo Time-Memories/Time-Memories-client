@@ -1,10 +1,24 @@
+import { ENDPOINTS } from '@shared/api';
+
 import { GoogleIcon } from './GoogleIcon';
 
+const BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080';
+
 export const SocialLoginButtons = () => {
+  const handleKakaoLogin = () => {
+    window.location.href = `${BASE_URL}${ENDPOINTS.oauth.authorizeKakao}`;
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${BASE_URL}${ENDPOINTS.oauth.authorizeGoogle}`;
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
       <button
         type="button"
+        onClick={handleKakaoLogin}
         className="flex w-full items-center justify-center gap-2.5 h-[50px] bg-[#fee500] border-2 border-black rounded-[14px]"
       >
         <span className="text-[11px] leading-none">💬</span>
@@ -13,6 +27,7 @@ export const SocialLoginButtons = () => {
 
       <button
         type="button"
+        onClick={handleGoogleLogin}
         className="flex w-full items-center justify-center gap-2.5 h-[50px] bg-white border border-[#e5e7eb] rounded-[14px]"
       >
         <GoogleIcon />
