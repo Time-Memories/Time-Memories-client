@@ -17,6 +17,12 @@ const sentryPlugin =
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), sentryPlugin],
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['sockjs-client'],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

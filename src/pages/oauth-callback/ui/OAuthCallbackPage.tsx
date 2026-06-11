@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@shared/model';
+import { LoadingDots } from '@shared/ui';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function OAuthCallbackPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-3">
-        <div className="size-10 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#1c2333]" />
+        <LoadingDots />
         <p className="text-sm text-[#9ca3af]">로그인 처리 중...</p>
       </div>
     </main>

@@ -1,22 +1,26 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ChevronLeft, ImageOff, LogOut, Pencil, Upload } from 'lucide-react';
+import { Camera, ChevronLeft, ImageOff, LogOut, Pencil, Upload, UserX } from 'lucide-react';
 
 import { useAuthStore } from '@shared/model';
-import { editMe } from '@shared/api';
+import { deleteMe, editMe } from '@shared/api';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [draft, setDraft] = useState(user?.name ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [accountError, setAccountError] = useState('');
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
 
   const currentName = user?.name ?? '';
 
@@ -27,16 +31,25 @@ export default function SettingsPage() {
   };
 
   const handleConfirmNickname = async () => {
+    if (savingRef.current) return;
+
     const trimmed = draft.trim();
     if (!trimmed || trimmed === currentName) {
       setEditingNickname(false);
       return;
     }
+    savingRef.current = true;
     setIsSaving(true);
     try {
-      await editMe({ name: trimmed });
-      await checkAuth();
+      const updatedUser = await editMe({ name: trimmed });
+
+      if (updatedUser?.name) {
+        updateUser({ name: updatedUser.name });
+      } else {
+        await checkAuth();
+      }
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
       setEditingNickname(false);
     }
@@ -45,6 +58,27 @@ export default function SettingsPage() {
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
+
+    const confirmed = window.confirm(
+      '정말 회원 탈퇴하시겠어요? 계정과 관련 데이터가 삭제될 수 있습니다.',
+    );
+    if (!confirmed) return;
+
+    setAccountError('');
+    setIsDeletingAccount(true);
+    try {
+      await deleteMe();
+      logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setAccountError(error instanceof Error ? error.message : '회원 탈퇴에 실패했습니다.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const handleChangePhoto = () => {
@@ -137,7 +171,23 @@ export default function SettingsPage() {
               <LogOut size={15} color="#ef4444" strokeWidth={1.5} />
               <span className="text-[#ef4444] text-[14px]">로그아웃</span>
             </button>
+            <div className="h-px bg-[#f0f1f3] mx-4" />
+            <button
+              onClick={() => void handleDeleteAccount()}
+              disabled={isDeletingAccount}
+              className="flex items-center w-full px-4 py-3.75 hover:bg-[#fff5f5] transition-colors gap-2.5 disabled:opacity-50"
+            >
+              <UserX size={15} color="#b91c1c" strokeWidth={1.5} />
+              <span className="text-[#b91c1c] text-[14px]">
+                {isDeletingAccount ? '탈퇴 처리 중...' : '회원 탈퇴'}
+              </span>
+            </button>
           </div>
+          {accountError && (
+            <div className="mt-2 rounded-[10px] bg-[#fff5f5] px-3.5 py-2 text-[12px] text-[#ef4444]">
+              {accountError}
+            </div>
+          )}
         </div>
       </div>
 

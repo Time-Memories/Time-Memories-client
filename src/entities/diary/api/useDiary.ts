@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -25,5 +25,12 @@ export function useDiary(diaryId: number) {
     queryKey: DiaryQueryKeys.detail(diaryId),
     queryFn: () => getDiary(diaryId),
     enabled: diaryId > 0,
+  });
+}
+
+export function useSuspenseDiary(diaryId: number) {
+  return useSuspenseQuery({
+    queryKey: DiaryQueryKeys.detail(diaryId),
+    queryFn: () => getDiary(diaryId),
   });
 }

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse } from '@shared/api';
 import { RoomQueryKeys } from './_keys';
@@ -26,5 +26,12 @@ export function useRoom(roomId: number) {
     queryKey: RoomQueryKeys.detail(roomId),
     queryFn: () => getRoom(roomId),
     enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseRoom(roomId: number) {
+  return useSuspenseQuery({
+    queryKey: RoomQueryKeys.detail(roomId),
+    queryFn: () => getRoom(roomId),
   });
 }
