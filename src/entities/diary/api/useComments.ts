@@ -1,4 +1,9 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, CursorPaginationParams } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -34,5 +39,28 @@ export function useSuspenseComments(diaryId: number) {
   return useSuspenseQuery({
     queryKey: DiaryQueryKeys.comments(diaryId),
     queryFn: () => getComments(diaryId, { size: 100 }),
+  });
+}
+
+export function useInfiniteComments(diaryId: number, size = 20) {
+  return useInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.comments(diaryId), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getComments(diaryId, { cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: diaryId > 0,
+  });
+}
+
+export function useSuspenseInfiniteComments(diaryId: number, size = 20) {
+  return useSuspenseInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.comments(diaryId), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getComments(diaryId, { cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 }

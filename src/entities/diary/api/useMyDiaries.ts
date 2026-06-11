@@ -1,4 +1,9 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, CursorPaginationResponse } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -46,5 +51,28 @@ export function useSuspenseMyDiaries(year: number, month: number, day?: number) 
   return useSuspenseQuery({
     queryKey: DiaryQueryKeys.myAll(year, month, day),
     queryFn: () => getMyDiaries({ year, month, day }),
+  });
+}
+
+export function useInfiniteMyDiaries(year: number, month: number, day?: number, size = 20) {
+  return useInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.myAll(year, month, day), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getMyDiaries({ year, month, day, cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: year > 0 && month > 0,
+  });
+}
+
+export function useSuspenseInfiniteMyDiaries(year: number, month: number, day?: number, size = 20) {
+  return useSuspenseInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.myAll(year, month, day), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getMyDiaries({ year, month, day, cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 }

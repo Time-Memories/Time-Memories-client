@@ -1,4 +1,9 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, PagePaginationParams, PagePaginationResponse } from '@shared/api';
 import { DiaryQueryKeys } from './_keys';
@@ -35,5 +40,30 @@ export function useSuspenseDiaries(roomId: number, page = 0, size = 20) {
   return useSuspenseQuery({
     queryKey: [...DiaryQueryKeys.listsByRoom(roomId), page],
     queryFn: () => getDiaries(roomId, { page, size }),
+  });
+}
+
+export function useInfiniteDiaries(roomId: number, size = 20) {
+  return useInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.listsByRoom(roomId), 'infinite', size],
+    queryFn: ({ pageParam }) => getDiaries(roomId, { page: pageParam, size }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.pageNumber + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
+    enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseInfiniteDiaries(roomId: number, size = 20) {
+  return useSuspenseInfiniteQuery({
+    queryKey: [...DiaryQueryKeys.listsByRoom(roomId), 'infinite', size],
+    queryFn: ({ pageParam }) => getDiaries(roomId, { page: pageParam, size }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.pageNumber + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
   });
 }
