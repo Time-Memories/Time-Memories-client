@@ -8,6 +8,7 @@ interface AuthState {
   isLoading: boolean;
   user: GetMeResponseBody | null;
   checkAuth: () => Promise<void>;
+  updateUser: (patch: Partial<GetMeResponseBody>) => void;
   logout: () => void;
 }
 
@@ -23,6 +24,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       set({ isAuthenticated: false, isLoading: false, user: null });
     }
+  },
+
+  updateUser: (patch) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...patch } : state.user,
+    }));
   },
 
   logout: () => {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { MainLayout } from '@widgets/main-layout';
 import { HomePage } from '@pages/home';
@@ -11,11 +11,13 @@ import { RoomCreatePage } from '@pages/room-create';
 import { DiaryDetailPage } from '@pages/diary-detail';
 import { DiaryWritePage } from '@pages/diary-write';
 import { SettingsPage } from '@pages/settings';
+import { MyDiariesPage } from '@pages/my-diaries';
 import { useAuthStore } from '@shared/model';
+import { AsyncBoundary, SuspenseFallback } from '@shared/ui';
 
 const LoadingScreen = () => (
-  <main className="flex min-h-dvh items-center justify-center bg-white">
-    <div className="size-10 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#1c2333]" />
+  <main className="min-h-dvh bg-white">
+    <SuspenseFallback variant="screen" />
   </main>
 );
 
@@ -37,30 +39,38 @@ function PublicRoute() {
 
 export default function AppRouter() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const location = useLocation();
 
   useEffect(() => {
     void checkAuth();
   }, [checkAuth]);
 
   return (
-    <Routes>
-      <Route element={<PublicRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-      </Route>
-      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="rooms/new" element={<RoomCreatePage />} />
-          <Route path="rooms/:roomId" element={<RoomPage />} />
-          <Route path="rooms/:roomId/diaries/new" element={<DiaryWritePage />} />
-          <Route path="rooms/:roomId/diaries/:diaryId/edit" element={<DiaryWritePage />} />
-          <Route path="rooms/:roomId/diaries/:diaryId" element={<DiaryDetailPage />} />
+    <AsyncBoundary
+      fallbackVariant="screen"
+      errorVariant="screen"
+      resetKeys={[location.pathname, location.search]}
+    >
+      <Routes>
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<LoginPage />} />
         </Route>
-      </Route>
-      <Route path="/404" element={<NotFoundPage />} />
-      <Route path="*" element={<Navigate to="/404" replace />} />
-    </Routes>
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="my-diaries" element={<MyDiariesPage />} />
+            <Route path="rooms/new" element={<RoomCreatePage />} />
+            <Route path="rooms/:roomId" element={<RoomPage />} />
+            <Route path="rooms/:roomId/diaries/new" element={<DiaryWritePage />} />
+            <Route path="rooms/:roomId/diaries/:diaryId/edit" element={<DiaryWritePage />} />
+            <Route path="rooms/:roomId/diaries/:diaryId" element={<DiaryDetailPage />} />
+          </Route>
+        </Route>
+        <Route path="/404" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+    </AsyncBoundary>
   );
 }

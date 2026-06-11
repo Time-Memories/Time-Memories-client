@@ -1,4 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { http, ENDPOINTS, unwrapApiResponse } from '@shared/api';
 import type { ApiResponse, CursorPaginationParams, CursorPaginationResponse } from '@shared/api';
 import { RoomQueryKeys } from './_keys';
@@ -27,5 +32,35 @@ export function useRoomMembers(roomId: number) {
     queryKey: RoomQueryKeys.members(roomId),
     queryFn: () => getRoomMembers(roomId, { size: 100 }),
     enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseRoomMembers(roomId: number) {
+  return useSuspenseQuery({
+    queryKey: RoomQueryKeys.members(roomId),
+    queryFn: () => getRoomMembers(roomId, { size: 100 }),
+  });
+}
+
+export function useInfiniteRoomMembers(roomId: number, size = 20) {
+  return useInfiniteQuery({
+    queryKey: [...RoomQueryKeys.members(roomId), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getRoomMembers(roomId, { cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: roomId > 0,
+  });
+}
+
+export function useSuspenseInfiniteRoomMembers(roomId: number, size = 20) {
+  return useSuspenseInfiniteQuery({
+    queryKey: [...RoomQueryKeys.members(roomId), 'infinite', size],
+    queryFn: ({ pageParam }) =>
+      getRoomMembers(roomId, { cursor: pageParam as number | undefined, size }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 }

@@ -26,6 +26,28 @@ export interface PresignedUrlResponse {
   uploads: UploadInfo[];
 }
 
+const IMAGE_BASE_URL = (
+  (import.meta.env.VITE_IMAGE_BASE_URL as string | undefined) ??
+  'https://d2u0ocp0437og0.cloudfront.net'
+).replace(/\/+$/, '');
+
+export function resolveImageUrl(imageKey: string): string {
+  if (/^https?:\/\//.test(imageKey)) return imageKey;
+  return `${IMAGE_BASE_URL}/${imageKey.replace(/^\/+/, '')}`;
+}
+
+export function getImageKeyFromUrl(imageUrlOrKey: string): string {
+  if (!/^https?:\/\//.test(imageUrlOrKey)) {
+    return imageUrlOrKey.replace(/^\/+/, '');
+  }
+
+  try {
+    return decodeURIComponent(new URL(imageUrlOrKey).pathname.replace(/^\/+/, ''));
+  } catch {
+    return imageUrlOrKey;
+  }
+}
+
 export async function getPresignedUrls(files: FileRequest[]): Promise<UploadInfo[]> {
   const res = await http.post<ApiResponse<PresignedUrlResponse>>(ENDPOINTS.images.presigned, {
     files,
@@ -34,11 +56,26 @@ export async function getPresignedUrls(files: FileRequest[]): Promise<UploadInfo
 }
 
 export async function uploadToS3(presignedUrl: string, file: File): Promise<void> {
-  await fetch(presignedUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+  } catch (error) {
+    throw new Error(
+      error instanceof TypeError
+        ? '이미지 업로드에 실패했습니다.'
+        : '이미지 업로드 중 오류가 발생했습니다.',
+      { cause: error },
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`이미지 업로드에 실패했습니다. (${response.status})`);
+  }
 }
 
 export async function uploadImages(files: File[]): Promise<string[]> {

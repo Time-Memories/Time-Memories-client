@@ -87,15 +87,30 @@ export function toApiClientError(error: unknown): ApiClientError {
   });
 }
 
-export function unwrapApiResponse<T>(payload: ApiResponse<T>): T {
-  if (payload.result === 'FAIL') {
-    throw new ApiClientError(payload.message ?? '요청 처리에 실패했습니다.', {
-      status: 200,
-      code: payload.code,
-      result: payload.result,
-      raw: payload,
-    });
+export function unwrapApiResponse<T>(payload: ApiResponse<T> | T): T {
+  if (isObject(payload) && payload.result === 'FAIL') {
+    throw new ApiClientError(
+      typeof payload.message === 'string' ? payload.message : '요청 처리에 실패했습니다.',
+      {
+        status: 200,
+        code: typeof payload.code === 'string' ? payload.code : undefined,
+        result: payload.result,
+        raw: payload,
+      },
+    );
   }
 
-  return payload.data;
+  if (isObject(payload) && payload.result === 'SUCCESS' && 'data' in payload) {
+    return payload.data as T;
+  }
+
+  if (
+    isObject(payload) &&
+    'data' in payload &&
+    ('code' in payload || 'message' in payload || 'state' in payload || 'status' in payload)
+  ) {
+    return payload.data as T;
+  }
+
+  return payload as T;
 }

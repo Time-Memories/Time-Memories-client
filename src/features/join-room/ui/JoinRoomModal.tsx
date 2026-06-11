@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 
 export interface JoinRoomModalProps {
   onClose: () => void;
@@ -15,24 +14,20 @@ export const JoinRoomModal = ({ onClose, onJoin }: JoinRoomModalProps) => {
 
   return (
     <div
-      className="absolute inset-0 bg-[rgba(15,20,30,0.45)] flex items-center justify-center z-10 px-6"
+      className="absolute inset-0 bg-[rgba(15,20,30,0.45)] flex items-end justify-center z-10"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-[20px] w-full px-5 pt-5 pb-6 flex flex-col gap-4"
+        className="bg-white w-full rounded-tl-[22px] rounded-tr-[22px] px-5 pt-5 pb-8 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[#1c2333] font-bold text-[16px]">방 참여하기</span>
-          <button
-            onClick={onClose}
-            className="flex items-center justify-center size-8 rounded-full hover:bg-[#f5f6f8] transition-colors"
-          >
-            <X size={16} color="#9ca3af" strokeWidth={1.5} />
-          </button>
+        <div className="flex justify-center mb-1">
+          <div className="bg-[#e0e3e8] h-1 rounded-sm w-9" />
         </div>
 
-        <p className="text-[#4b5563] text-[13px] leading-5 -mt-1">
+        <span className="text-[#1c2333] font-bold text-[17px]">방 참여하기</span>
+
+        <p className="text-[#4b5563] text-[12.3px] leading-[19.5px] -mt-2">
           친구에게 방 코드를 공유받으세요!
         </p>
 
