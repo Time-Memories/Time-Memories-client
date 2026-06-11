@@ -1,9 +1,9 @@
 import { Lock, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { formatMonthDay, isSameDay } from '@shared/lib';
-import { useCalendarCounts, useSuspenseMyDiaries } from '@entities/diary';
+import { formatMonthDay, isSameDay, useLoadMoreOnIntersect } from '@shared/lib';
+import { useCalendarCounts, useSuspenseInfiniteMyDiaries } from '@entities/diary';
 import { AsyncBoundary, LoadingDots } from '@shared/ui';
 
 import { MiniCalendar } from './MiniCalendar';
@@ -72,9 +72,25 @@ interface CalendarDiaryEntriesProps {
 
 const CalendarDiaryEntries = ({ year, month, selectedDay }: CalendarDiaryEntriesProps) => {
   const navigate = useNavigate();
-  const { data: diariesData } = useSuspenseMyDiaries(year, month, selectedDay);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteMyDiaries(
+    year,
+    month,
+    selectedDay,
+  );
 
-  const entries = diariesData.content;
+  const entries = data.pages.flatMap((page) => page.content);
+
+  const loadMoreEntries = useCallback(() => {
+    void fetchNextPage();
+  }, [fetchNextPage]);
+
+  useLoadMoreOnIntersect({
+    enabled: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: loadMoreEntries,
+    targetRef: loadMoreRef,
+  });
 
   return (
     <div className="flex flex-col divide-y divide-[#eceef2]">
@@ -106,6 +122,14 @@ const CalendarDiaryEntries = ({ year, month, selectedDay }: CalendarDiaryEntries
           이 날의 일기가 없어요
         </div>
       )}
+
+      <div ref={loadMoreRef} className="min-h-1">
+        {isFetchingNextPage && (
+          <div className="py-3 text-center text-[#9ca3af] text-[12px]">
+            일기를 더 불러오는 중...
+          </div>
+        )}
+      </div>
     </div>
   );
 };

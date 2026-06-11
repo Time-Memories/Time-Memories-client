@@ -1,18 +1,39 @@
+import { useRef } from 'react';
+
 import type { RoomMember } from '@entities/room';
+import { useLoadMoreOnIntersect } from '@shared/lib';
 
 export interface MemberListSheetProps {
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   members: RoomMember[];
   onClose: () => void;
+  onLoadMore?: () => void;
 }
 
-export const MemberListSheet = ({ members, onClose }: MemberListSheetProps) => {
+export const MemberListSheet = ({
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  members,
+  onClose,
+  onLoadMore,
+}: MemberListSheetProps) => {
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useLoadMoreOnIntersect({
+    enabled: hasNextPage && Boolean(onLoadMore),
+    isLoading: isFetchingNextPage,
+    onLoadMore: () => onLoadMore?.(),
+    targetRef: loadMoreRef,
+  });
+
   return (
     <div
       className="absolute inset-0 bg-[rgba(15,20,30,0.45)] flex items-end z-10"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full rounded-tl-[22px] rounded-tr-[22px] px-5 pt-5 pb-10"
+        className="bg-white w-full rounded-tl-[22px] rounded-tr-[22px] px-5 pt-5 pb-10 max-h-[76svh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center mb-4">
@@ -24,7 +45,7 @@ export const MemberListSheet = ({ members, onClose }: MemberListSheetProps) => {
           <span className="text-[#9ca3af] text-[13px]">{members.length}명</span>
         </div>
 
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-auto min-h-0">
           {members.map((member, index) => (
             <div
               key={member.id}
@@ -38,6 +59,14 @@ export const MemberListSheet = ({ members, onClose }: MemberListSheetProps) => {
               {member.isMe && <span className="text-[#9ca3af] text-[11.5px] font-normal">나</span>}
             </div>
           ))}
+
+          <div ref={loadMoreRef} className="min-h-1">
+            {isFetchingNextPage && (
+              <div className="py-3 text-center text-[#9ca3af] text-[12px]">
+                참여자를 더 불러오는 중...
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
