@@ -1,44 +1,104 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, Image, Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Calendar, Image, Plus, X } from 'lucide-react';
 
 import { formatKoreanDate } from '@shared/lib';
+import { useCreateDiary, useEditDiary, useDiary } from '@entities/diary';
+import type { DiaryDetailDto } from '@entities/diary';
+import { uploadImages } from '@shared/api';
 
-export default function DiaryWritePage() {
+interface DiaryFormProps {
+  roomId: number;
+  diaryId?: number;
+  initialData?: DiaryDetailDto;
+}
+
+function DiaryForm({ roomId, diaryId, initialData }: DiaryFormProps) {
   const navigate = useNavigate();
-  const [date] = useState(new Date());
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [photoColors] = useState(['#fde2dc', '#dde7f6']);
+  const isEdit = !!diaryId;
 
-  const handleCancel = () => {
-    navigate(-1);
+  const [date] = useState(() => (initialData ? new Date(initialData.diaryDate) : new Date()));
+  const [title, setTitle] = useState(initialData?.title ?? '');
+  const [content, setContent] = useState(initialData?.content ?? '');
+  const [previewUrls, setPreviewUrls] = useState<string[]>(initialData?.imageUrls ?? []);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const createMutation = useCreateDiary(roomId);
+  const editMutation = useEditDiary(diaryId ?? 0, roomId);
+
+  const existingCount = (initialData?.imageUrls ?? []).length;
+  const totalImages = previewUrls.length;
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const remaining = 5 - totalImages;
+    const selected = files.slice(0, remaining);
+    setNewImages((prev) => [...prev, ...selected]);
+    setPreviewUrls((prev) => [...prev, ...selected.map((f) => URL.createObjectURL(f))]);
   };
 
-  const handleSave = () => {
-    // TODO: API 연동 후 저장 처리
-    navigate(-1);
+  const handleRemoveImage = (index: number) => {
+    if (index < existingCount) {
+      setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const newIndex = index - existingCount;
+      setNewImages((prev) => prev.filter((_, i) => i !== newIndex));
+      setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    }
   };
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    setIsUploading(true);
+    try {
+      const newKeys = newImages.length > 0 ? await uploadImages(newImages) : [];
+      const keptExistingUrls = previewUrls.slice(0, existingCount);
+      const keptKeys = initialData?.imageUrls.filter((url) => keptExistingUrls.includes(url)) ?? [];
+      const imageKeys = [...keptKeys, ...newKeys];
+      const diaryDate = date.toISOString().split('T')[0];
+
+      if (isEdit && diaryId) {
+        await editMutation.mutateAsync({ title: title.trim(), content, diaryDate, imageKeys });
+        navigate(`/rooms/${roomId}/diaries/${diaryId}`);
+      } else {
+        const created = await createMutation.mutateAsync({
+          title: title.trim(),
+          content,
+          diaryDate,
+          imageKeys,
+        });
+        navigate(`/rooms/${roomId}/diaries/${created.diaryId}`);
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const isPending = isUploading || createMutation.isPending || editMutation.isPending;
+  const isValid = title.trim().length > 0 && !isPending;
 
   return (
     <div className="flex flex-col h-svh bg-white">
-      {/* 헤더 */}
       <div className="shrink-0 flex items-center justify-between px-4 pt-3.5 pb-3.75 border-b border-[#eceef2]">
-        <button onClick={handleCancel} className="text-[#4b5563] text-[14px] min-w-10">
+        <button onClick={() => navigate(-1)} className="text-[#4b5563] text-[14px] min-w-10">
           취소
         </button>
-        <span className="text-[#1c2333] text-[15px] font-bold">새 일기</span>
+        <span className="text-[#1c2333] text-[15px] font-bold">
+          {isEdit ? '일기 수정' : '새 일기'}
+        </span>
         <button
-          onClick={handleSave}
-          className="text-[#1c2333] text-[14px] font-bold min-w-10 text-right"
+          onClick={() => void handleSave()}
+          disabled={!isValid}
+          className="text-[#1c2333] text-[14px] font-bold min-w-10 text-right disabled:text-[#9ca3af]"
         >
-          저장
+          {isPending ? '저장 중...' : '저장'}
         </button>
       </div>
 
-      {/* 폼 */}
       <div className="flex-1 overflow-auto min-h-0 px-4.5 py-4 flex flex-col gap-3.5">
-        {/* 일자 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[#4b5563] text-[11.3px] font-medium">일자</label>
           <div className="bg-white border border-[#e5e7eb] rounded-xl px-3.75 py-3.25 flex items-center justify-between">
@@ -47,7 +107,6 @@ export default function DiaryWritePage() {
           </div>
         </div>
 
-        {/* 제목 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[#4b5563] text-[11.3px] font-medium">제목</label>
           <div className="bg-white border border-[#e5e7eb] rounded-xl px-3.75 py-3.25">
@@ -61,24 +120,39 @@ export default function DiaryWritePage() {
           </div>
         </div>
 
-        {/* 사진 */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[#4b5563] text-[11.3px] font-medium">사진</label>
+          <label className="text-[#4b5563] text-[11.3px] font-medium">사진 ({totalImages}/5)</label>
           <div className="flex gap-2 items-start flex-wrap">
-            {photoColors.map((color, i) => (
-              <div
-                key={i}
-                className="size-15 rounded-[10px] shrink-0"
-                style={{ backgroundColor: color }}
-              />
+            {previewUrls.map((url, idx) => (
+              <div key={url} className="relative size-15 shrink-0">
+                <img src={url} alt="" className="size-15 rounded-[10px] object-cover" />
+                <button
+                  onClick={() => handleRemoveImage(idx)}
+                  className="absolute -top-1.5 -right-1.5 size-4.5 rounded-full bg-[#1c2333] flex items-center justify-center"
+                >
+                  <X size={10} color="white" strokeWidth={2.5} />
+                </button>
+              </div>
             ))}
-            <button className="size-15 rounded-[10px] bg-[#f5f6f8] border border-dashed border-[#e5e7eb] flex items-center justify-center shrink-0">
-              <Plus size={20} color="#9ca3af" />
-            </button>
+            {totalImages < 5 && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="size-15 rounded-[10px] bg-[#f5f6f8] border border-dashed border-[#e5e7eb] flex items-center justify-center shrink-0"
+              >
+                <Plus size={20} color="#9ca3af" />
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageSelect}
+            />
           </div>
         </div>
 
-        {/* 내용 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[#4b5563] text-[11.3px] font-medium">내용</label>
           <div className="bg-white border border-[#e5e7eb] rounded-xl px-3.75 py-3.5 min-h-40">
@@ -92,9 +166,11 @@ export default function DiaryWritePage() {
         </div>
       </div>
 
-      {/* 하단 툴바 */}
       <div className="shrink-0 bg-[#f5f6f8] border-t border-[#eceef2] flex items-center gap-1.5 px-4 py-2.5">
-        <button className="bg-white border border-[#eceef2] rounded-[14px] flex items-center gap-1.25 px-2.75 py-1.75">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="bg-white border border-[#eceef2] rounded-[14px] flex items-center gap-1.25 px-2.75 py-1.75"
+        >
           <Image size={12} color="#4b5563" />
           <span className="text-[#4b5563] text-[12px]">사진</span>
         </button>
@@ -106,5 +182,31 @@ export default function DiaryWritePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function DiaryWritePage() {
+  const { roomId, diaryId } = useParams();
+  const roomIdNum = Number(roomId);
+  const diaryIdNum = diaryId ? Number(diaryId) : 0;
+  const isEdit = diaryIdNum > 0;
+
+  const { data: existingDiary, isLoading } = useDiary(diaryIdNum);
+
+  if (isEdit && isLoading) {
+    return (
+      <div className="flex flex-col h-svh bg-white items-center justify-center">
+        <span className="text-[#9ca3af] text-[13px]">불러오는 중...</span>
+      </div>
+    );
+  }
+
+  return (
+    <DiaryForm
+      key={diaryIdNum}
+      roomId={roomIdNum}
+      diaryId={isEdit ? diaryIdNum : undefined}
+      initialData={existingDiary}
+    />
   );
 }

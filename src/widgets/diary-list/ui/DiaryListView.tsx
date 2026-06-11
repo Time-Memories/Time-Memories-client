@@ -1,14 +1,9 @@
 import { MessageCircle, Pencil, UserPlus } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 
-import type { DiaryEntry } from '@entities/diary';
 import { DiaryEntryCard } from '@entities/diary';
-
-const MOCK_DIARIES: DiaryEntry[] = [
-  { id: '1', title: '제주도 여행 첫날', author: '지원', date: '05.15', thumbnailColor: '#fde2dc' },
-  { id: '2', title: '함덕 해변에서', author: '민호', date: '05.16', thumbnailColor: '#dde7f6' },
-  { id: '3', title: '흑돼지 맛집 후기', author: '수아', date: '05.16', thumbnailColor: '#fff1cc' },
-  { id: '4', title: '한라산 등반 성공!', author: '나', date: '05.17', thumbnailColor: '#e5e7eb' },
-];
+import { useDiaries } from '@entities/diary';
+import { formatMonthDay } from '@shared/lib';
 
 export interface DiaryListViewProps {
   onChatOpen: () => void;
@@ -23,17 +18,27 @@ export const DiaryListView = ({
   onDiaryClick,
   onInvite,
 }: DiaryListViewProps) => {
+  const { roomId } = useParams();
+  const roomIdNum = Number(roomId);
+  const { data, isLoading } = useDiaries(roomIdNum);
+
+  const diaries = data?.content ?? [];
+
   return (
     <div className="relative flex-1 min-h-0">
       <div className="bg-[#f5f6f8] flex flex-col gap-2 h-full overflow-auto pt-[14px] px-[14px] pb-[80px]">
-        {MOCK_DIARIES.map((diary) => (
+        {isLoading && (
+          <div className="text-[#9ca3af] text-[13px] text-center py-4">불러오는 중...</div>
+        )}
+        {diaries.map((diary) => (
           <DiaryEntryCard
-            key={diary.id}
+            key={diary.diaryId}
             title={diary.title}
-            author={diary.author}
-            date={diary.date}
-            thumbnailColor={diary.thumbnailColor}
-            onClick={() => onDiaryClick(diary.id)}
+            author={diary.authorName}
+            date={formatMonthDay(new Date(diary.createdAt))}
+            thumbnailColor="#e5e7eb"
+            thumbnailUrl={diary.thumbnailUrl}
+            onClick={() => onDiaryClick(String(diary.diaryId))}
           />
         ))}
       </div>
