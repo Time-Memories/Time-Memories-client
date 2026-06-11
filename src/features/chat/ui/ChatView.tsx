@@ -1,10 +1,12 @@
-import { Image as ImageIcon, LoaderCircle, Plus, SendHorizontal } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Image as ImageIcon, LoaderCircle, Plus, SendHorizontal, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { resolveChatImageUrl, useSuspenseChats } from '../api/useChats';
 import type { ChatDto } from '../api/useChats';
+import { useDeleteChat } from '../api/useDeleteChat';
 import { useChatSocket } from '../api/useChatSocket';
 import { uploadImages } from '@shared/api';
+import { useLoadMoreOnIntersect } from '@shared/lib';
 import { useAuthStore } from '@shared/model';
 
 interface ChatViewProps {
@@ -63,15 +65,31 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { data } = useSuspenseChats(roomId);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseChats(roomId);
   const user = useAuthStore((s) => s.user);
   const { send, sendImages, status, errorMessage } = useChatSocket(roomId);
+  const deleteChatMutation = useDeleteChat(roomId);
 
-  const allMessages = data.pages.flatMap((p) => p.messages);
+  const allMessages = useMemo(
+    () => [...data.pages.flatMap((p) => p.messages)].reverse(),
+    [data.pages],
+  );
   const isConnected = status === 'connected';
   const feedbackMessage = errorMessage ?? uploadErrorMessage;
   const isBusy = isUploading;
+
+  const loadMoreMessages = useCallback(() => {
+    void fetchNextPage();
+  }, [fetchNextPage]);
+
+  useLoadMoreOnIntersect({
+    enabled: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: loadMoreMessages,
+    targetRef: loadMoreRef,
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,6 +110,11 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
   const handlePhotoMenuClick = () => {
     setShowAttachmentMenu(false);
     fileInputRef.current?.click();
+  };
+
+  const handleDeleteMessage = (chatId: number) => {
+    if (!window.confirm('이 채팅을 삭제할까요?')) return;
+    deleteChatMutation.mutate(chatId);
   };
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,6 +155,14 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
   return (
     <div className="bg-[#f5f6f8] flex flex-col flex-1 min-h-0 relative">
       <div className="flex flex-col gap-[10px] overflow-auto pb-[92px] pt-[14px] px-[14px] flex-1">
+        <div ref={loadMoreRef} className="min-h-px">
+          {isFetchingNextPage && (
+            <div className="text-[#9ca3af] text-[11px] text-center py-2">
+              이전 메시지를 불러오는 중...
+            </div>
+          )}
+        </div>
+
         {allMessages.map((message, index) => {
           const prevMessage = allMessages[index - 1];
           const isSameAuthorAsPrev = prevMessage && prevMessage.senderId === message.senderId;
@@ -139,10 +170,19 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
 
           if (isMe) {
             return (
-              <div key={message.chatId} className="flex flex-col items-end">
+              <div key={message.chatId} className="group flex flex-col items-end">
                 <div className="flex flex-col gap-[2px] items-start">
                   <ChatBubbleContent isMe={isMe} message={message} />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMessage(message.chatId)}
+                  disabled={deleteChatMutation.isPending}
+                  className="mt-1 flex items-center gap-1 rounded-[9px] px-1.5 py-1 text-[10.5px] text-[#9ca3af] opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-40"
+                >
+                  <Trash2 size={11} color="#9ca3af" strokeWidth={1.5} />
+                  삭제
+                </button>
               </div>
             );
           }

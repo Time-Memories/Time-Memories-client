@@ -19,6 +19,10 @@ interface WebSocketErrorResponse {
   code: string;
 }
 
+interface ChatDeletedResponse {
+  chatId: number;
+}
+
 function getStompErrorMessage(message?: string): string {
   if (message?.includes('clientInboundChannel')) {
     return '채팅 서버 인증에 실패했습니다. WebSocket 인증 설정을 확인해주세요.';
@@ -60,6 +64,23 @@ export function useChatSocket(roomId: number) {
     };
 
     client.onConnect = () => {
+      const removeMessageFromCache = (chatId: number) => {
+        queryClient.setQueryData<InfiniteData<GetChatsResponseBody>>(
+          ChatQueryKeys.list(roomId),
+          (old) => {
+            if (!old) return old;
+
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                messages: page.messages.filter((message) => message.chatId !== chatId),
+              })),
+            };
+          },
+        );
+      };
+
       client.subscribe(`${WS_SUBSCRIBE_PREFIX}/${roomId}`, (frame) => {
         try {
           const msg = JSON.parse(frame.body) as ChatDto;
@@ -82,12 +103,21 @@ export function useChatSocket(roomId: number) {
               const [first, ...rest] = old.pages;
               return {
                 ...old,
-                pages: [{ ...first, messages: [...first.messages, msg] }, ...rest],
+                pages: [{ ...first, messages: [msg, ...first.messages] }, ...rest],
               };
             },
           );
         } catch (error) {
           console.error('Failed to parse chat message.', error);
+        }
+      });
+
+      client.subscribe(`${WS_SUBSCRIBE_PREFIX}/${roomId}/updates`, (frame) => {
+        try {
+          const deleted = JSON.parse(frame.body) as ChatDeletedResponse;
+          removeMessageFromCache(deleted.chatId);
+        } catch (error) {
+          console.error('Failed to parse chat update.', error);
         }
       });
 
