@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-react';
 
 import {
   useSuspenseDiary,
-  useSuspenseComments,
+  useSuspenseInfiniteComments,
   useCreateComment,
+  useDeleteComment,
   useDeleteDiary,
+  useUpdateComment,
 } from '@entities/diary';
 import { useAuthStore } from '@shared/model';
-import { formatKoreanDate } from '@shared/lib';
-import { AsyncBoundary } from '@shared/ui';
+import { formatKoreanDate, useLoadMoreOnIntersect } from '@shared/lib';
+import { AsyncBoundary, ConfirmSheet } from '@shared/ui';
 
 export default function DiaryDetailPage() {
   const { roomId, diaryId } = useParams();
@@ -45,16 +47,39 @@ interface DiaryDetailContentProps {
 function DiaryDetailContent({ roomId, diaryId }: DiaryDetailContentProps) {
   const navigate = useNavigate();
   const [commentText, setCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null);
+  const loadMoreCommentsRef = useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((s) => s.user);
 
   const { data: diary } = useSuspenseDiary(diaryId);
-  const { data: commentsData } = useSuspenseComments(diaryId);
+  const {
+    data: commentsData,
+    fetchNextPage: fetchNextCommentsPage,
+    hasNextPage: hasNextCommentsPage,
+    isFetchingNextPage: isFetchingNextCommentsPage,
+  } = useSuspenseInfiniteComments(diaryId);
   const createCommentMutation = useCreateComment(diaryId);
+  const updateCommentMutation = useUpdateComment(diaryId);
+  const deleteCommentMutation = useDeleteComment(diaryId);
   const deleteDiaryMutation = useDeleteDiary(roomId);
 
-  const comments = commentsData?.content ?? [];
+  const comments = commentsData.pages.flatMap((page) => page.content);
+
+  const loadMoreComments = useCallback(() => {
+    void fetchNextCommentsPage();
+  }, [fetchNextCommentsPage]);
+
+  useLoadMoreOnIntersect({
+    enabled: Boolean(hasNextCommentsPage),
+    isLoading: isFetchingNextCommentsPage,
+    onLoadMore: loadMoreComments,
+    targetRef: loadMoreCommentsRef,
+  });
 
   const handleBack = () => {
     navigate(`/rooms/${roomId}`);
@@ -67,10 +92,49 @@ function DiaryDetailContent({ roomId, diaryId }: DiaryDetailContentProps) {
     });
   };
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
     setShowMenu(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
     deleteDiaryMutation.mutate(diaryId, {
-      onSuccess: () => navigate(`/rooms/${roomId}`),
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        navigate(`/rooms/${roomId}`);
+      },
+    });
+  };
+
+  const handleStartEditComment = (commentId: number, content: string) => {
+    setEditingCommentId(commentId);
+    setEditingCommentText(content);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+  const handleUpdateComment = () => {
+    if (!editingCommentId || !editingCommentText.trim()) return;
+
+    updateCommentMutation.mutate(
+      { commentId: editingCommentId, content: editingCommentText.trim() },
+      {
+        onSuccess: handleCancelEditComment,
+      },
+    );
+  };
+
+  const handleDeleteComment = (commentId: number) => {
+    setDeleteCommentId(commentId);
+  };
+
+  const handleDeleteCommentConfirm = () => {
+    if (!deleteCommentId) return;
+    deleteCommentMutation.mutate(deleteCommentId, {
+      onSuccess: () => setDeleteCommentId(null),
     });
   };
 
@@ -134,12 +198,12 @@ function DiaryDetailContent({ roomId, diaryId }: DiaryDetailContentProps) {
                       </button>
                       <div className="h-px bg-[#eceef2] mx-3" />
                       <button
-                        onClick={handleDelete}
+                        onClick={handleDeleteClick}
                         disabled={deleteDiaryMutation.isPending}
-                        className="flex items-center gap-2.5 px-4 py-3 w-full text-left hover:bg-[#fff5f5] transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2.5 px-4 py-3 w-full text-left hover:bg-[#f5f6f8] transition-colors disabled:opacity-50"
                       >
-                        <Trash2 size={14} color="#ef4444" strokeWidth={1.5} />
-                        <span className="text-[#ef4444] text-[13.5px]">삭제</span>
+                        <Trash2 size={14} color="#1c2333" strokeWidth={1.5} />
+                        <span className="text-[#1c2333] text-[13.5px]">삭제</span>
                       </button>
                     </div>
                   </>
@@ -205,23 +269,103 @@ function DiaryDetailContent({ roomId, diaryId }: DiaryDetailContentProps) {
               <div key={comment.commentId} className="flex gap-2.5 items-start">
                 <div className="size-7 rounded-full shrink-0 mt-px bg-[#e5e7eb]" />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.75">
-                    <span className="text-[#1c2333] text-[12px] font-bold">
+                  <div className="flex items-center gap-1.5 mb-0.75 min-w-0">
+                    <span className="text-[#1c2333] text-[12px] font-bold shrink-0">
                       {comment.authorNickname}
                     </span>
-                    <span className="text-[#9ca3af] text-[11px]">
+                    <span className="text-[#9ca3af] text-[11px] shrink-0">
                       {new Date(comment.createdAt).toLocaleDateString('ko-KR')}
                     </span>
+                    {user?.userId === comment.authorId &&
+                      editingCommentId !== comment.commentId && (
+                        <div className="ml-auto flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleStartEditComment(comment.commentId, comment.content)
+                            }
+                            className="text-[#9ca3af] text-[11px]"
+                          >
+                            수정
+                          </button>
+                          <span className="text-[#d1d5db] text-[10px]">|</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(comment.commentId)}
+                            disabled={deleteCommentMutation.isPending}
+                            className="text-[#1c2333] text-[11px] disabled:opacity-45"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
                   </div>
-                  <p className="text-[#1c2333] text-[12.5px] leading-[18.85px]">
-                    {comment.content}
-                  </p>
+                  {editingCommentId === comment.commentId ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateComment()}
+                        className="min-w-0 flex-1 rounded-[10px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12.5px] text-[#1c2333] outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleUpdateComment}
+                        disabled={updateCommentMutation.isPending || !editingCommentText.trim()}
+                        className="rounded-[9px] bg-[#1c2333] px-2.5 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-40"
+                      >
+                        저장
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEditComment}
+                        className="rounded-[9px] px-1.5 py-1.5 text-[11.5px] text-[#9ca3af]"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[#1c2333] text-[12.5px] leading-[18.85px]">
+                      {comment.content}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
+            <div ref={loadMoreCommentsRef} className="min-h-1">
+              {isFetchingNextCommentsPage && (
+                <div className="py-2 text-center text-[#9ca3af] text-[11.5px]">
+                  댓글을 더 불러오는 중...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <ConfirmSheet
+          title="일기를 삭제할까요?"
+          description="삭제한 일기는 복구할 수 없어요."
+          confirmLabel="삭제"
+          destructive
+          isPending={deleteDiaryMutation.isPending}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
+      {deleteCommentId !== null && (
+        <ConfirmSheet
+          title="댓글을 삭제할까요?"
+          confirmLabel="삭제"
+          destructive
+          isPending={deleteCommentMutation.isPending}
+          onConfirm={handleDeleteCommentConfirm}
+          onClose={() => setDeleteCommentId(null)}
+        />
+      )}
 
       <div className="shrink-0 px-2.5 pb-4 pt-2.5 bg-white border-t border-[#e5e7eb]">
         <div className="relative bg-white border border-[#e5e7eb] rounded-3xl h-13 flex items-center pl-4 pr-2.5">
