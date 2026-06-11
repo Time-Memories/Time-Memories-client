@@ -2,27 +2,49 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronLeft, ImageOff, LogOut, Pencil, Upload } from 'lucide-react';
 
-const MOCK_AVATAR_COLOR = '#dde7f6';
-const MOCK_NICKNAME = '여행자';
+import { useAuthStore } from '@shared/model';
+import { editMe } from '@shared/api';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState(MOCK_NICKNAME);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const checkAuth = useAuthStore((s) => s.checkAuth);
+
   const [editingNickname, setEditingNickname] = useState(false);
-  const [draft, setDraft] = useState(nickname);
+  const [draft, setDraft] = useState(user?.name ?? '');
+  const [isSaving, setIsSaving] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const currentName = user?.name ?? '';
+
   const handleEditNickname = () => {
-    setDraft(nickname);
+    setDraft(currentName);
     setEditingNickname(true);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
-  const handleConfirmNickname = () => {
-    if (draft.trim()) setNickname(draft.trim());
-    setEditingNickname(false);
+  const handleConfirmNickname = async () => {
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === currentName) {
+      setEditingNickname(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await editMe({ name: trimmed });
+      await checkAuth();
+    } finally {
+      setIsSaving(false);
+      setEditingNickname(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
   };
 
   const handleChangePhoto = () => {
@@ -32,7 +54,6 @@ export default function SettingsPage() {
 
   const handleResetPhoto = () => {
     setShowAvatarMenu(false);
-    // TODO: 기본 사진으로 초기화
   };
 
   return (
@@ -47,10 +68,7 @@ export default function SettingsPage() {
 
       <div className="flex flex-col items-center pt-9 pb-8 px-5">
         <div className="relative mb-4">
-          <div
-            className="size-[82px] rounded-full"
-            style={{ backgroundColor: MOCK_AVATAR_COLOR }}
-          />
+          <div className="size-20.5 rounded-full bg-[#dde7f6]" />
           <button
             onClick={() => setShowAvatarMenu(true)}
             className="absolute bottom-0 right-0 bg-[#1c2333] rounded-full size-6.5 flex items-center justify-center border-2 border-[#f5f6f8]"
@@ -63,9 +81,7 @@ export default function SettingsPage() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={() => {
-              // TODO: 이미지 업로드 처리
-            }}
+            onChange={() => {}}
           />
         </div>
 
@@ -74,17 +90,20 @@ export default function SettingsPage() {
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleConfirmNickname()}
-            onBlur={handleConfirmNickname}
+            onKeyDown={(e) => e.key === 'Enter' && void handleConfirmNickname()}
+            onBlur={() => void handleConfirmNickname()}
             maxLength={16}
-            className="text-[#1c2333] font-bold text-[19px] text-center bg-transparent border-b-2 border-[#1c2333] outline-none w-40 pb-0.5"
+            disabled={isSaving}
+            className="text-[#1c2333] font-bold text-[19px] text-center bg-transparent border-b-2 border-[#1c2333] outline-none w-40 pb-0.5 disabled:opacity-60"
           />
         ) : (
           <button onClick={handleEditNickname} className="flex items-center gap-1.5 group">
-            <span className="text-[#1c2333] font-bold text-[19px]">{nickname}</span>
+            <span className="text-[#1c2333] font-bold text-[19px]">{currentName}</span>
             <Pencil size={13} color="#9ca3af" strokeWidth={1.5} />
           </button>
         )}
+
+        {user?.email && <span className="text-[#9ca3af] text-[12px] mt-1">{user.email}</span>}
       </div>
 
       <div className="flex flex-col gap-3 px-[18px]">
@@ -96,7 +115,7 @@ export default function SettingsPage() {
               className="flex items-center justify-between w-full px-4 py-3.75 hover:bg-[#fafbfc] transition-colors"
             >
               <span className="text-[#1c2333] text-[14px]">닉네임</span>
-              <span className="text-[#9ca3af] text-[13px]">{nickname}</span>
+              <span className="text-[#9ca3af] text-[13px]">{currentName}</span>
             </button>
             <div className="h-px bg-[#f0f1f3] mx-4" />
             <button
@@ -111,7 +130,10 @@ export default function SettingsPage() {
         <div>
           <span className="text-[#9ca3af] text-[11.3px] font-medium px-1 mb-2 block">기타</span>
           <div className="bg-white rounded-[14px] border border-[#eceef2] overflow-hidden">
-            <button className="flex items-center w-full px-4 py-3.75 hover:bg-[#fff5f5] transition-colors gap-2.5">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-3.75 hover:bg-[#fff5f5] transition-colors gap-2.5"
+            >
               <LogOut size={15} color="#ef4444" strokeWidth={1.5} />
               <span className="text-[#ef4444] text-[14px]">로그아웃</span>
             </button>
