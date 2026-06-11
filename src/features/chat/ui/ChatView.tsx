@@ -1,7 +1,8 @@
 import { SendHorizontal } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { useChats } from '../api/useChats';
+import { useSuspenseChats } from '../api/useChats';
+import { useChatSocket } from '../api/useChatSocket';
 import { useAuthStore } from '@shared/model';
 
 interface ChatViewProps {
@@ -11,23 +12,32 @@ interface ChatViewProps {
 export const ChatView = ({ roomId }: ChatViewProps) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { data, isLoading } = useChats(roomId);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const { data } = useSuspenseChats(roomId);
   const user = useAuthStore((s) => s.user);
+  const { send, status, errorMessage } = useChatSocket(roomId);
 
-  const allMessages = data?.pages.flatMap((p) => p.messages) ?? [];
+  const allMessages = data.pages.flatMap((p) => p.messages);
+  const isConnected = status === 'connected';
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [allMessages.length]);
 
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    const didSend = send(trimmed);
+    if (!didSend) return;
+
     setInputValue('');
+    inputRef.current?.focus();
   };
 
   return (
     <div className="bg-[#f5f6f8] flex flex-col flex-1 min-h-0 relative">
       <div className="flex flex-col gap-[10px] overflow-auto pb-[80px] pt-[14px] px-[14px] flex-1">
-        {isLoading && (
-          <div className="text-[#9ca3af] text-[11px] text-center py-4">불러오는 중...</div>
-        )}
-
         {allMessages.map((message, index) => {
           const prevMessage = allMessages[index - 1];
           const isSameAuthorAsPrev = prevMessage && prevMessage.senderId === message.senderId;
@@ -68,7 +78,14 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
             </div>
           );
         })}
+        <div ref={bottomRef} />
       </div>
+
+      {(status !== 'connected' || errorMessage) && (
+        <div className="absolute bottom-[68px] left-[14px] right-[14px] text-center text-[11px] text-[#9ca3af]">
+          {errorMessage ?? '채팅 서버에 연결 중입니다...'}
+        </div>
+      )}
 
       <div className="absolute bottom-3 left-[10px] right-[10px] bg-white border border-[#e5e7eb] rounded-[24px] h-[52px] flex items-center px-4">
         <input
@@ -77,12 +94,15 @@ export const ChatView = ({ roomId }: ChatViewProps) => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="메시지 보내기..."
+          placeholder={isConnected ? '메시지 보내기...' : '연결 중...'}
           className="flex-1 text-[12.2px] text-[#1c2333] placeholder:text-[#9ca3af] bg-transparent outline-none"
         />
         <button
+          type="button"
           onClick={handleSend}
-          className="bg-[#1c2333] rounded-[15.5px] flex items-center justify-center h-[34px] w-7 shrink-0"
+          disabled={!isConnected}
+          aria-label="메시지 보내기"
+          className="bg-[#1c2333] disabled:bg-[#c7ccd5] rounded-[15.5px] flex items-center justify-center h-[34px] w-7 shrink-0 transition-colors"
         >
           <SendHorizontal size={16} color="white" strokeWidth={1.5} />
         </button>

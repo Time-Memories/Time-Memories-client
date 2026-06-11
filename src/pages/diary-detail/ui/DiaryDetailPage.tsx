@@ -1,25 +1,58 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-react';
 
-import { useDiary, useComments, useCreateComment, useDeleteDiary } from '@entities/diary';
+import {
+  useSuspenseDiary,
+  useSuspenseComments,
+  useCreateComment,
+  useDeleteDiary,
+} from '@entities/diary';
 import { useAuthStore } from '@shared/model';
 import { formatKoreanDate } from '@shared/lib';
+import { AsyncBoundary } from '@shared/ui';
 
 export default function DiaryDetailPage() {
   const { roomId, diaryId } = useParams();
+  const roomIdNum = Number(roomId);
+  const diaryIdNum = Number(diaryId);
+
+  if (
+    !Number.isInteger(roomIdNum) ||
+    roomIdNum <= 0 ||
+    !Number.isInteger(diaryIdNum) ||
+    diaryIdNum <= 0
+  ) {
+    return <Navigate to="/404" replace />;
+  }
+
+  return (
+    <AsyncBoundary
+      fallbackVariant="screen"
+      errorVariant="screen"
+      resetKeys={[roomIdNum, diaryIdNum]}
+    >
+      <DiaryDetailContent roomId={roomIdNum} diaryId={diaryIdNum} />
+    </AsyncBoundary>
+  );
+}
+
+interface DiaryDetailContentProps {
+  roomId: number;
+  diaryId: number;
+}
+
+function DiaryDetailContent({ roomId, diaryId }: DiaryDetailContentProps) {
   const navigate = useNavigate();
   const [commentText, setCommentText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
 
-  const diaryIdNum = Number(diaryId);
-  const roomIdNum = Number(roomId);
   const user = useAuthStore((s) => s.user);
 
-  const { data: diary, isLoading } = useDiary(diaryIdNum);
-  const { data: commentsData } = useComments(diaryIdNum);
-  const createCommentMutation = useCreateComment(diaryIdNum);
-  const deleteDiaryMutation = useDeleteDiary(roomIdNum);
+  const { data: diary } = useSuspenseDiary(diaryId);
+  const { data: commentsData } = useSuspenseComments(diaryId);
+  const createCommentMutation = useCreateComment(diaryId);
+  const deleteDiaryMutation = useDeleteDiary(roomId);
 
   const comments = commentsData?.content ?? [];
 
@@ -36,18 +69,10 @@ export default function DiaryDetailPage() {
 
   const handleDelete = () => {
     setShowMenu(false);
-    deleteDiaryMutation.mutate(diaryIdNum, {
+    deleteDiaryMutation.mutate(diaryId, {
       onSuccess: () => navigate(`/rooms/${roomId}`),
     });
   };
-
-  if (isLoading || !diary) {
-    return (
-      <div className="flex flex-col h-svh bg-white items-center justify-center">
-        <span className="text-[#9ca3af] text-[13px]">불러오는 중...</span>
-      </div>
-    );
-  }
 
   const isMyDiary = user?.userId === diary.authorId;
   const thumbnailUrl = diary.imageUrls[0];

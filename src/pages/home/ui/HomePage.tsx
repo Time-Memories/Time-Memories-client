@@ -6,6 +6,7 @@ import { JoinRoomModal } from '@features/join-room';
 import { CalendarView } from '@widgets/diary-calendar';
 import { RoomListView } from '@widgets/room-list';
 import { useJoinRoom } from '@entities/room';
+import { AsyncBoundary } from '@shared/ui';
 
 import type { ViewTab } from '../model/types';
 import { TabSwitcher } from './TabSwitcher';
@@ -44,11 +45,15 @@ export default function HomePage() {
 
       <div className="h-px bg-[#eceef2] shrink-0" />
 
-      {activeTab === 'list' ? (
-        <RoomListView onJoinRoom={() => setShowJoinModal(true)} />
-      ) : (
-        <CalendarView />
-      )}
+      <div className="relative flex flex-1 min-h-0">
+        <AsyncBoundary fallbackVariant="section" resetKeys={[activeTab]}>
+          {activeTab === 'list' ? (
+            <RoomListView onJoinRoom={() => setShowJoinModal(true)} />
+          ) : (
+            <CalendarView />
+          )}
+        </AsyncBoundary>
+      </div>
 
       {showJoinModal && (
         <JoinRoomModal onClose={() => setShowJoinModal(false)} onJoin={handleJoin} />

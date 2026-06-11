@@ -1,11 +1,11 @@
 import { MessageCircle, Pencil, UserPlus } from 'lucide-react';
-import { useParams } from 'react-router-dom';
 
 import { DiaryEntryCard } from '@entities/diary';
-import { useDiaries } from '@entities/diary';
+import { useSuspenseDiaries } from '@entities/diary';
 import { formatMonthDay } from '@shared/lib';
 
 export interface DiaryListViewProps {
+  roomId: number;
   onChatOpen: () => void;
   onAddDiary: () => void;
   onDiaryClick: (id: string) => void;
@@ -13,23 +13,19 @@ export interface DiaryListViewProps {
 }
 
 export const DiaryListView = ({
+  roomId,
   onChatOpen,
   onAddDiary,
   onDiaryClick,
   onInvite,
 }: DiaryListViewProps) => {
-  const { roomId } = useParams();
-  const roomIdNum = Number(roomId);
-  const { data, isLoading } = useDiaries(roomIdNum);
+  const { data } = useSuspenseDiaries(roomId);
 
-  const diaries = data?.content ?? [];
+  const diaries = data.content;
 
   return (
     <div className="relative flex-1 min-h-0">
       <div className="bg-[#f5f6f8] flex flex-col gap-2 h-full overflow-auto pt-[14px] px-[14px] pb-[80px]">
-        {isLoading && (
-          <div className="text-[#9ca3af] text-[13px] text-center py-4">불러오는 중...</div>
-        )}
         {diaries.map((diary) => (
           <DiaryEntryCard
             key={diary.diaryId}

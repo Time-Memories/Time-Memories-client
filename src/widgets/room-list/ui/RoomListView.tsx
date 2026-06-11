@@ -1,7 +1,7 @@
 import { Lock, Plus, UserPlus, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { useRooms } from '@entities/room';
+import { useSuspenseRooms } from '@entities/room';
 import { MemberAvatars } from './MemberAvatars';
 
 interface RoomListViewProps {
@@ -10,9 +10,9 @@ interface RoomListViewProps {
 
 export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
   const navigate = useNavigate();
-  const { data, isLoading } = useRooms();
+  const { data } = useSuspenseRooms();
 
-  const rooms = data?.pages.flatMap((p) => p.content) ?? [];
+  const rooms = data.pages.flatMap((p) => p.content);
 
   return (
     <div className="flex flex-col gap-2 flex-1 overflow-auto px-4.5 py-3.5 bg-[#f5f6f8]">
@@ -36,10 +36,6 @@ export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
         <span className="text-[#4b5563] text-[13px] font-normal">내 방</span>
         <span className="text-[#9ca3af] text-[12px] font-medium">{rooms.length}</span>
       </div>
-
-      {isLoading && (
-        <div className="text-[#9ca3af] text-[13px] text-center py-4">불러오는 중...</div>
-      )}
 
       {rooms.map((room) => (
         <button
