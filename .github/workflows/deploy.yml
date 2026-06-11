@@ -1,0 +1,59 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    name: CI Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm format:check
+
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+
+  deploy:
+    name: Sync to forked repo
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AUTO_ACTIONS }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Add remote
+        run: |
+          git remote add forked-repo https://hoon-ground:${{ secrets.AUTO_ACTIONS }}@github.com/hoon-ground/Time-Memories-client
+          git config user.name hoon-ground
+          git config user.email ${{ secrets.EMAIL }}
+
+      - name: Push to forked repo
+        run: git push -f forked-repo main
+
+      - name: Clean up
+        run: git remote remove forked-repo
