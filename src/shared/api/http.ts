@@ -1,7 +1,7 @@
-import axios, { AxiosHeaders } from 'axios';
+import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-import { clearAccessToken, getAccessToken } from './auth';
+import { ENDPOINTS } from './endpoints';
 import { toApiClientError } from './error';
 
 const FALLBACK_API_BASE_URL = 'http://localhost:8080';
@@ -34,27 +34,69 @@ export function setUnauthorizedHandler(handler: ((status: number) => void) | nul
   unauthorizedHandler = handler;
 }
 
-http.interceptors.request.use((config) => {
-  const headers = AxiosHeaders.from(config.headers);
+let isRefreshing = false;
+type QueueEntry = { resolve: () => void; reject: (err: unknown) => void };
+const refreshQueue: QueueEntry[] = [];
 
-  const accessToken = getAccessToken();
-  if (accessToken) {
-    headers.set('Authorization', `Bearer ${accessToken}`);
+function flushRefreshQueue(err: unknown): void {
+  for (const entry of refreshQueue) {
+    if (err) {
+      entry.reject(err);
+    } else {
+      entry.resolve();
+    }
+  }
+  refreshQueue.length = 0;
+}
+
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    _refreshed?: boolean;
   }
 
-  config.headers = headers;
-
-  return config;
-});
+  interface InternalAxiosRequestConfig {
+    _refreshed?: boolean;
+  }
+}
 
 http.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
-    const parsedError = toApiClientError(error);
+  async (error: unknown) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject(toApiClientError(error));
+    }
 
-    if (parsedError.status === 401) {
-      clearAccessToken();
-      unauthorizedHandler?.(parsedError.status);
+    const config = error.config;
+    const status = error.response?.status;
+    const parsedError = toApiClientError(error);
+    const isRefreshEndpoint = config?.url?.includes(ENDPOINTS.auth.refresh) ?? false;
+
+    if (status === 401 && config && !config._refreshed && !isRefreshEndpoint) {
+      if (isRefreshing) {
+        return new Promise<void>((resolve, reject) => {
+          refreshQueue.push({ resolve, reject });
+        })
+          .then(() => http({ ...config, _refreshed: true }))
+          .catch(() => Promise.reject(parsedError));
+      }
+
+      isRefreshing = true;
+
+      try {
+        const baseURL = http.defaults.baseURL ?? FALLBACK_API_BASE_URL;
+        await axios.post(`${baseURL}${ENDPOINTS.auth.refresh}`, undefined, {
+          withCredentials: true,
+        });
+
+        flushRefreshQueue(null);
+        return http({ ...config, _refreshed: true });
+      } catch (refreshErr) {
+        flushRefreshQueue(refreshErr);
+        unauthorizedHandler?.(401);
+        return Promise.reject(parsedError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     return Promise.reject(parsedError);
