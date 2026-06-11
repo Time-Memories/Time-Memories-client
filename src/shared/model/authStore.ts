@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 
-import { ENDPOINTS, getMe, http } from '@shared/api';
-import type { MeResponse } from '@shared/api';
+import { ENDPOINTS, getMe, http } from '../api';
+import type { GetMeResponseBody } from '../api';
 
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: MeResponse | null;
+  user: GetMeResponseBody | null;
   checkAuth: () => Promise<void>;
   logout: () => void;
 }

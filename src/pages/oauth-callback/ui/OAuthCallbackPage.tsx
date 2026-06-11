@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuthStore } from '@shared/store';
+import { useAuthStore } from '@shared/model';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();

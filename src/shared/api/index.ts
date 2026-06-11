@@ -4,7 +4,7 @@ export { ApiClientError, toApiClientError, unwrapApiResponse } from './error';
 export { http, setUnauthorizedHandler } from './http';
 export { buildJsonFormData, omitUndefined } from './utils';
 
-export type { MeResponse } from './auth-api';
+export type { GetMeResponseBody } from './auth-api';
 export type {
   ApiErrorInfo,
   ApiResponse,

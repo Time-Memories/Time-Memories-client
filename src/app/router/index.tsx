@@ -11,7 +11,7 @@ import { RoomCreatePage } from '@pages/room-create';
 import { DiaryDetailPage } from '@pages/diary-detail';
 import { DiaryWritePage } from '@pages/diary-write';
 import { SettingsPage } from '@pages/settings';
-import { useAuthStore } from '@shared/store';
+import { useAuthStore } from '@shared/model';
 
 const LoadingScreen = () => (
   <main className="flex min-h-dvh items-center justify-center bg-white">

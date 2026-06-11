@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 import { setUnauthorizedHandler } from '@shared/api';
-import { useAuthStore } from '@shared/store';
+import { useAuthStore } from '@shared/model';
 
 export default function MainLayout() {
   const navigate = useNavigate();

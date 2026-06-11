@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { ENDPOINTS } from '@shared/api';
 
-import kakaoLoginImage from '../../../../assets/kakao_login.png';
+import kakaoLoginImage from './assets/kakao_login.png';
 import { GoogleIcon } from './GoogleIcon';
 
 const BASE_URL =
@@ -167,8 +167,7 @@ export const SocialLoginButtons = () => {
         >
           <span className="absolute left-[4.85%] flex size-[18px] items-center justify-center">
             <GoogleIcon />
-          </span>{' '}
-          2
+          </span>
           <span className="absolute left-[40.2%] whitespace-nowrap text-left text-[16px] font-bold leading-none text-[#1c2333]">
             Google 로그인
           </span>
