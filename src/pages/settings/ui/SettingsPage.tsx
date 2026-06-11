@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [draft, setDraft] = useState(user?.name ?? '');
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
 
   const currentName = user?.name ?? '';
 
@@ -27,16 +29,25 @@ export default function SettingsPage() {
   };
 
   const handleConfirmNickname = async () => {
+    if (savingRef.current) return;
+
     const trimmed = draft.trim();
     if (!trimmed || trimmed === currentName) {
       setEditingNickname(false);
       return;
     }
+    savingRef.current = true;
     setIsSaving(true);
     try {
-      await editMe({ name: trimmed });
-      await checkAuth();
+      const updatedUser = await editMe({ name: trimmed });
+
+      if (updatedUser?.name) {
+        updateUser({ name: updatedUser.name });
+      } else {
+        await checkAuth();
+      }
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
       setEditingNickname(false);
     }

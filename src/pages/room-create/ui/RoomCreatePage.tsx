@@ -10,6 +10,7 @@ export default function RoomCreatePage() {
   const navigate = useNavigate();
   const [roomName, setRoomName] = useState('');
   const [memberCount, setMemberCount] = useState<number>(2);
+  const [errorMessage, setErrorMessage] = useState('');
   const createRoomMutation = useCreateRoom();
 
   const handleCancel = () => {
@@ -18,11 +19,23 @@ export default function RoomCreatePage() {
 
   const handleCreate = () => {
     if (!roomName.trim()) return;
+    setErrorMessage('');
+
     createRoomMutation.mutate(
       { title: roomName.trim(), type: memberCount === 1 ? 'PRIVATE' : 'GROUP' },
       {
         onSuccess: (data) => {
-          navigate(`/rooms/${data.roomId}`);
+          if (typeof data?.roomId === 'number') {
+            navigate(`/rooms/${data.roomId}`);
+            return;
+          }
+
+          navigate('/');
+        },
+        onError: (error) => {
+          setErrorMessage(
+            error instanceof Error ? error.message : '방을 만드는 중 오류가 발생했습니다.',
+          );
         },
       },
     );
@@ -42,11 +55,17 @@ export default function RoomCreatePage() {
           disabled={!isValid}
           className="text-[14px] font-bold min-w-[40px] text-right disabled:text-[#9ca3af] text-[#1c2333]"
         >
-          만들기
+          {createRoomMutation.isPending ? '생성 중' : '만들기'}
         </button>
       </div>
 
       <div className="flex-1 overflow-auto min-h-0 px-[18px] py-[16px] flex flex-col gap-[14px]">
+        {errorMessage && (
+          <div className="rounded-[10px] bg-[#fff5f5] px-3.5 py-2.5 text-[12.5px] text-[#ef4444]">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="flex flex-col gap-[6px]">
           <label className="text-[#4b5563] text-[11.3px] font-medium">방 이름</label>
           <div className="bg-white border border-[#e5e7eb] rounded-[12px] px-[15px] py-[13px]">
