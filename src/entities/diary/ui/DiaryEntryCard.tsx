@@ -3,6 +3,7 @@ export interface DiaryEntryCardProps {
   author: string;
   date: string;
   thumbnailColor: string;
+  thumbnailUrl?: string;
   onClick?: () => void;
 }
 
@@ -11,6 +12,7 @@ export const DiaryEntryCard = ({
   author,
   date,
   thumbnailColor,
+  thumbnailUrl,
   onClick,
 }: DiaryEntryCardProps) => {
   return (
@@ -19,9 +21,13 @@ export const DiaryEntryCard = ({
       className="bg-white border border-[#eceef2] rounded-[14px] flex items-center gap-3 p-[13px] w-full text-left hover:bg-[#fafbfc] transition-colors shrink-0"
     >
       <div
-        className="rounded-[10px] shrink-0 size-16 border border-[#eceef2]"
-        style={{ backgroundColor: thumbnailColor }}
-      />
+        className="rounded-[10px] shrink-0 size-16 border border-[#eceef2] overflow-hidden"
+        style={!thumbnailUrl ? { backgroundColor: thumbnailColor } : undefined}
+      >
+        {thumbnailUrl && (
+          <img src={thumbnailUrl} alt={title} className="w-full h-full object-cover" />
+        )}
+      </div>
       <div className="flex flex-col gap-[6px] min-w-0">
         <span className="text-[#1c2333] font-bold text-[14.3px] leading-[19.5px] truncate">
           {title}

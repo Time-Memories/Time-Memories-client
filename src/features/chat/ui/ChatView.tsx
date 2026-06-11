@@ -1,50 +1,20 @@
 import { SendHorizontal } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import type { ChatMessage } from '@entities/message';
+import { useChats } from '../api/useChats';
+import { useAuthStore } from '@shared/model';
 
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: '1',
-    senderId: 'minho',
-    senderName: '민호',
-    senderColor: '#fde2dc',
-    text: '한라산 일기 봤어, 진짜 부럽다 ㅋㅋ',
-    isMe: false,
-  },
-  {
-    id: '2',
-    senderId: 'minho',
-    senderName: '민호',
-    senderColor: '#fde2dc',
-    text: '사진 너무 잘 나왔는데?',
-    isMe: false,
-  },
-  {
-    id: '3',
-    senderId: 'me',
-    senderName: '나',
-    senderColor: '',
-    text: '고마워 ㅎㅎ 다음엔 같이 가자',
-    isMe: true,
-    time: '오후 2:14',
-    readCount: 0,
-  },
-  {
-    id: '4',
-    senderId: 'sua',
-    senderName: '수아',
-    senderColor: '#e5e7eb',
-    text: '나도 ㅠㅠ 7월 같이 가요',
-    isMe: false,
-  },
-];
+interface ChatViewProps {
+  roomId: number;
+}
 
-const DATE_LABEL = '2026.05.18';
-
-export const ChatView = () => {
+export const ChatView = ({ roomId }: ChatViewProps) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const { data, isLoading } = useChats(roomId);
+  const user = useAuthStore((s) => s.user);
+
+  const allMessages = data?.pages.flatMap((p) => p.messages) ?? [];
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -54,27 +24,23 @@ export const ChatView = () => {
   return (
     <div className="bg-[#f5f6f8] flex flex-col flex-1 min-h-0 relative">
       <div className="flex flex-col gap-[10px] overflow-auto pb-[80px] pt-[14px] px-[14px] flex-1">
-        <div className="flex justify-center py-1">
-          <div className="bg-[#f5f6f8] px-[10px] py-[3px] rounded-[10px]">
-            <span className="text-[#9ca3af] text-[11px]">{DATE_LABEL}</span>
-          </div>
-        </div>
+        {isLoading && (
+          <div className="text-[#9ca3af] text-[11px] text-center py-4">불러오는 중...</div>
+        )}
 
-        {MOCK_MESSAGES.map((message, index) => {
-          const prevMessage = MOCK_MESSAGES[index - 1];
+        {allMessages.map((message, index) => {
+          const prevMessage = allMessages[index - 1];
           const isSameAuthorAsPrev = prevMessage && prevMessage.senderId === message.senderId;
+          const isMe = user?.userId === message.senderId;
 
-          if (message.isMe) {
+          if (isMe) {
             return (
-              <div key={message.id} className="flex flex-col items-end">
+              <div key={message.chatId} className="flex flex-col items-end">
                 <div className="flex flex-col gap-[2px] items-start">
                   <div className="bg-[#1c2333] rounded-bl-[14px] rounded-br-[4px] rounded-tl-[14px] rounded-tr-[14px] px-3 py-[8px] max-w-[200px]">
                     <p className="text-white text-[12.5px] font-normal leading-[18.2px] break-words text-right whitespace-pre-wrap">
-                      {message.text}
+                      {message.content}
                     </p>
-                  </div>
-                  <div className="flex justify-end w-full">
-                    <span className="text-[#9ca3af] text-[9.4px]">읽음 · {message.time}</span>
                   </div>
                 </div>
               </div>
@@ -82,12 +48,9 @@ export const ChatView = () => {
           }
 
           return (
-            <div key={message.id} className="flex items-end gap-2">
+            <div key={message.chatId} className="flex items-end gap-2">
               {!isSameAuthorAsPrev ? (
-                <div
-                  className="rounded-[14px] shrink-0 size-7"
-                  style={{ backgroundColor: message.senderColor }}
-                />
+                <div className="rounded-[14px] shrink-0 size-7 bg-[#e5e7eb]" />
               ) : (
                 <div className="shrink-0 w-7" />
               )}
@@ -98,7 +61,7 @@ export const ChatView = () => {
                 )}
                 <div className="bg-white border border-[#eceef2] rounded-bl-[4px] rounded-br-[14px] rounded-tl-[14px] rounded-tr-[14px] px-3 py-[8px] max-w-[200px]">
                   <p className="text-[#1c2333] text-[12.5px] font-normal leading-[18.2px] break-words whitespace-pre-wrap">
-                    {message.text}
+                    {message.content}
                   </p>
                 </div>
               </div>

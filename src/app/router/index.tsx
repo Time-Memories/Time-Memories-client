@@ -55,6 +55,7 @@ export default function AppRouter() {
           <Route path="rooms/new" element={<RoomCreatePage />} />
           <Route path="rooms/:roomId" element={<RoomPage />} />
           <Route path="rooms/:roomId/diaries/new" element={<DiaryWritePage />} />
+          <Route path="rooms/:roomId/diaries/:diaryId/edit" element={<DiaryWritePage />} />
           <Route path="rooms/:roomId/diaries/:diaryId" element={<DiaryDetailPage />} />
         </Route>
       </Route>

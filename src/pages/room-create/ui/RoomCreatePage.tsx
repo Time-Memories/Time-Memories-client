@@ -2,23 +2,33 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users } from 'lucide-react';
 
+import { useCreateRoom } from '@entities/room';
+
 const MEMBER_COUNTS = Array.from({ length: 11 }, (_, i) => i + 2);
 
 export default function RoomCreatePage() {
   const navigate = useNavigate();
   const [roomName, setRoomName] = useState('');
   const [memberCount, setMemberCount] = useState<number>(2);
+  const createRoomMutation = useCreateRoom();
 
   const handleCancel = () => {
     navigate(-1);
   };
 
   const handleCreate = () => {
-    // TODO: API 연동 후 방 생성 처리
-    navigate(-1);
+    if (!roomName.trim()) return;
+    createRoomMutation.mutate(
+      { title: roomName.trim(), type: memberCount === 1 ? 'PRIVATE' : 'GROUP' },
+      {
+        onSuccess: (data) => {
+          navigate(`/rooms/${data.roomId}`);
+        },
+      },
+    );
   };
 
-  const isValid = roomName.trim().length > 0;
+  const isValid = roomName.trim().length > 0 && !createRoomMutation.isPending;
 
   return (
     <div className="flex flex-col h-svh bg-white">

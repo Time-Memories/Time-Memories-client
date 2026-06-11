@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { RoomInfo, RoomMember } from '@entities/room';
+import type { RoomMember } from '@entities/room';
+import { useRoom, useRoomMembers } from '@entities/room';
 import { ChatView } from '@features/chat';
 import { InviteSheet } from '@widgets/invite-sheet';
 import { MemberListSheet } from '@widgets/member-list-sheet';
@@ -10,26 +11,23 @@ import { RoomHeader } from '@widgets/room-header';
 
 import type { RoomView } from '../model/types';
 
-const MOCK_ROOM: RoomInfo = {
-  id: '1',
-  name: '제주도 여행 🌴',
-  code: 'JEJU24',
-  memberCount: 3,
-  memberColors: ['#fde2dc', '#dde7f6', '#e5e7eb'],
-};
-
-const MOCK_MEMBERS: RoomMember[] = [
-  { id: '1', name: '나', color: '#dde7f6', isMe: true },
-  { id: '2', name: '민호', color: '#fde2dc' },
-  { id: '3', name: '수아', color: '#e5e7eb' },
-];
-
 export default function RoomPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [view, setView] = useState<RoomView>('diary');
   const [showInviteSheet, setShowInviteSheet] = useState(false);
   const [showMemberSheet, setShowMemberSheet] = useState(false);
+
+  const roomIdNum = Number(roomId);
+  const { data: room } = useRoom(roomIdNum);
+  const { data: membersData } = useRoomMembers(roomIdNum);
+
+  const members: RoomMember[] = (membersData?.content ?? []).map((m) => ({
+    id: String(m.userId),
+    name: m.name,
+    color: '#e5e7eb',
+    isMe: m.role === 'OWNER',
+  }));
 
   const handleBack = () => {
     if (view === 'chat') {
@@ -40,21 +38,23 @@ export default function RoomPage() {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(MOCK_ROOM.code).catch(() => {});
+    if (room?.roomCode) {
+      navigator.clipboard.writeText(room.roomCode).catch(() => {});
+    }
   };
 
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ text: MOCK_ROOM.code }).catch(() => {});
+    if (room?.roomCode && navigator.share) {
+      navigator.share({ text: room.roomCode }).catch(() => {});
     }
   };
 
   return (
     <div className="flex flex-col min-h-svh bg-[#f5f6f8] relative">
       <RoomHeader
-        roomName={MOCK_ROOM.name}
+        roomName={room?.title ?? ''}
         variant={view}
-        memberCount={MOCK_ROOM.memberCount}
+        memberCount={members.length}
         onBack={handleBack}
         onMore={() => (view === 'chat' ? setShowMemberSheet(true) : navigate('/settings'))}
       />
@@ -67,18 +67,18 @@ export default function RoomPage() {
           onInvite={() => setShowInviteSheet(true)}
         />
       ) : (
-        <ChatView />
+        <ChatView roomId={roomIdNum} />
       )}
 
       {showMemberSheet && (
-        <MemberListSheet members={MOCK_MEMBERS} onClose={() => setShowMemberSheet(false)} />
+        <MemberListSheet members={members} onClose={() => setShowMemberSheet(false)} />
       )}
 
-      {showInviteSheet && (
+      {showInviteSheet && room && (
         <InviteSheet
-          roomCode={MOCK_ROOM.code}
-          memberCount={MOCK_ROOM.memberCount}
-          memberColors={MOCK_ROOM.memberColors}
+          roomCode={room.roomCode}
+          memberCount={members.length}
+          memberColors={members.map((m) => m.color)}
           onClose={() => setShowInviteSheet(false)}
           onCopy={handleCopy}
           onShare={handleShare}
