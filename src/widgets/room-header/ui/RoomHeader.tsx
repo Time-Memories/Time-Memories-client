@@ -1,4 +1,4 @@
-import { ChevronLeft, User } from 'lucide-react';
+import { ChevronLeft, Settings } from 'lucide-react';
 
 export interface RoomHeaderProps {
   roomName: string;
@@ -30,7 +30,7 @@ export const RoomHeader = ({ roomName, variant, memberCount, onBack, onMore }: R
         onClick={onMore}
         className="flex items-center justify-center rounded-[10px] size-9 shrink-0 hover:bg-[#f5f6f8] transition-colors"
       >
-        <User size={18} color="#1c2333" strokeWidth={1.5} />
+        <Settings size={18} color="#1c2333" strokeWidth={1.5} />
       </button>
     </div>
   );
