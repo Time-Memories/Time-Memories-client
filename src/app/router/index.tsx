@@ -11,6 +11,7 @@ import { RoomCreatePage } from '@pages/room-create';
 import { DiaryDetailPage } from '@pages/diary-detail';
 import { DiaryWritePage } from '@pages/diary-write';
 import { SettingsPage } from '@pages/settings';
+import { MyDiariesPage } from '@pages/my-diaries';
 import { useAuthStore } from '@shared/model';
 import { AsyncBoundary, SuspenseFallback } from '@shared/ui';
 
@@ -59,6 +60,7 @@ export default function AppRouter() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="my-diaries" element={<MyDiariesPage />} />
             <Route path="rooms/new" element={<RoomCreatePage />} />
             <Route path="rooms/:roomId" element={<RoomPage />} />
             <Route path="rooms/:roomId/diaries/new" element={<DiaryWritePage />} />
