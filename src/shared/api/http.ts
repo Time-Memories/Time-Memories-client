@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 
 import { ENDPOINTS } from './endpoints';
@@ -38,6 +38,14 @@ let isRefreshing = false;
 type QueueEntry = { resolve: () => void; reject: (err: unknown) => void };
 const refreshQueue: QueueEntry[] = [];
 
+interface RefreshableAxiosRequestConfig<D = unknown> extends AxiosRequestConfig<D> {
+  _refreshed?: boolean;
+}
+
+interface RefreshableInternalAxiosRequestConfig<D = unknown> extends InternalAxiosRequestConfig<D> {
+  _refreshed?: boolean;
+}
+
 function flushRefreshQueue(err: unknown): void {
   for (const entry of refreshQueue) {
     if (err) {
@@ -49,24 +57,20 @@ function flushRefreshQueue(err: unknown): void {
   refreshQueue.length = 0;
 }
 
-declare module 'axios' {
-  interface AxiosRequestConfig {
-    _refreshed?: boolean;
-  }
-
-  interface InternalAxiosRequestConfig {
-    _refreshed?: boolean;
-  }
+function toRefreshedConfig(
+  config: RefreshableInternalAxiosRequestConfig,
+): RefreshableAxiosRequestConfig {
+  return { ...config, _refreshed: true };
 }
 
 http.interceptors.response.use(
   (response) => response,
   async (error: unknown) => {
-    if (!axios.isAxiosError(error)) {
+    if (!axios.isAxiosError<unknown, unknown>(error)) {
       return Promise.reject(toApiClientError(error));
     }
 
-    const config = error.config;
+    const config: RefreshableInternalAxiosRequestConfig | undefined = error.config;
     const status = error.response?.status;
     const parsedError = toApiClientError(error);
     const isRefreshEndpoint = config?.url?.includes(ENDPOINTS.auth.refresh) ?? false;
@@ -76,7 +80,7 @@ http.interceptors.response.use(
         return new Promise<void>((resolve, reject) => {
           refreshQueue.push({ resolve, reject });
         })
-          .then(() => http({ ...config, _refreshed: true }))
+          .then(() => http(toRefreshedConfig(config)))
           .catch(() => Promise.reject(parsedError));
       }
 
@@ -89,7 +93,7 @@ http.interceptors.response.use(
         });
 
         flushRefreshQueue(null);
-        return http({ ...config, _refreshed: true });
+        return http(toRefreshedConfig(config));
       } catch (refreshErr) {
         flushRefreshQueue(refreshErr);
         unauthorizedHandler?.(401);
