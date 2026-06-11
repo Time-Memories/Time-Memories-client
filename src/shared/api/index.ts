@@ -1,4 +1,11 @@
 export { getMe } from './auth-api';
+export {
+  createStompClient,
+  WS_ENDPOINT,
+  WS_ERROR_QUEUE,
+  WS_PUBLISH_PREFIX,
+  WS_SUBSCRIBE_PREFIX,
+} from './stomp';
 export { ENDPOINTS } from './endpoints';
 export { ApiClientError, toApiClientError, unwrapApiResponse } from './error';
 export { http, setUnauthorizedHandler } from './http';
