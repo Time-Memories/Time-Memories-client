@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { JoinRoomModal } from '@features/join-room';
 import { CalendarView } from '@widgets/diary-calendar';
 import { RoomListView } from '@widgets/room-list';
+import { useJoinRoom } from '@entities/room';
 
 import type { ViewTab } from '../model/types';
 import { TabSwitcher } from './TabSwitcher';
@@ -13,10 +14,18 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ViewTab>('list');
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const joinRoomMutation = useJoinRoom();
 
-  const handleJoin = (_: string) => {
-    // TODO: API 연동 후 방 참여 처리
-    setShowJoinModal(false);
+  const handleJoin = (code: string) => {
+    joinRoomMutation.mutate(
+      { roomCode: code },
+      {
+        onSuccess: (data) => {
+          setShowJoinModal(false);
+          navigate(`/rooms/${data.roomId}`);
+        },
+      },
+    );
   };
 
   return (

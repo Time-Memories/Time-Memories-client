@@ -1,36 +1,18 @@
 import { Lock, Plus, UserPlus, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import type { PrivateDiary, Room } from '../model/types';
+import { useRooms } from '@entities/room';
 import { MemberAvatars } from './MemberAvatars';
 
 interface RoomListViewProps {
   onJoinRoom: () => void;
 }
 
-const MOCK_ROOMS: Room[] = [
-  {
-    id: '1',
-    name: '제주도 여행 🌴',
-    memberColors: ['#fde2dc', '#dde7f6', '#e5e7eb'],
-  },
-  {
-    id: '2',
-    name: '카페 탐방대 ☕',
-    memberColors: ['#dde7f6', '#fde2dc'],
-  },
-];
-
-const MOCK_PRIVATE_DIARIES: PrivateDiary[] = [
-  {
-    id: '1',
-    name: '나의 일기장',
-    count: 47,
-  },
-];
-
 export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
   const navigate = useNavigate();
+  const { data, isLoading } = useRooms();
+
+  const rooms = data?.pages.flatMap((p) => p.content) ?? [];
 
   return (
     <div className="flex flex-col gap-2 flex-1 overflow-auto px-4.5 py-3.5 bg-[#f5f6f8]">
@@ -52,17 +34,21 @@ export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
       <div className="flex items-center gap-2 pt-2.5 shrink-0">
         <Users size={16} color="#4b5563" strokeWidth={1.5} />
         <span className="text-[#4b5563] text-[13px] font-normal">내 방</span>
-        <span className="text-[#9ca3af] text-[12px] font-medium">{MOCK_ROOMS.length}</span>
+        <span className="text-[#9ca3af] text-[12px] font-medium">{rooms.length}</span>
       </div>
 
-      {MOCK_ROOMS.map((room) => (
+      {isLoading && (
+        <div className="text-[#9ca3af] text-[13px] text-center py-4">불러오는 중...</div>
+      )}
+
+      {rooms.map((room) => (
         <button
-          key={room.id}
-          onClick={() => navigate(`/rooms/${room.id}`)}
-          className="bg-white border border-[#eceef2] rounded-xl flex items-center justify-between px-[17px] py-3.75 shrink-0 text-left hover:bg-[#fafbfc] transition-colors"
+          key={room.roomId}
+          onClick={() => navigate(`/rooms/${room.roomId}`)}
+          className="bg-white border border-[#eceef2] rounded-xl flex items-center justify-between px-4.25 py-3.75 shrink-0 text-left hover:bg-[#fafbfc] transition-colors"
         >
-          <span className="text-[#1c2333] text-[14.6px] font-medium">{room.name}</span>
-          <MemberAvatars colors={room.memberColors} />
+          <span className="text-[#1c2333] text-[14.6px] font-medium">{room.title}</span>
+          <MemberAvatars colors={[]} />
         </button>
       ))}
 
@@ -70,19 +56,21 @@ export const RoomListView = ({ onJoinRoom }: RoomListViewProps) => {
         <Lock size={16} color="#4b5563" strokeWidth={1.5} />
         <span className="text-[#4b5563] text-[13px] font-normal">개인 일기</span>
         <span className="text-[#9ca3af] text-[12px] font-medium">
-          {MOCK_PRIVATE_DIARIES.length}
+          {rooms.filter((r) => r.type === 'PRIVATE').length}
         </span>
       </div>
 
-      {MOCK_PRIVATE_DIARIES.map((diary) => (
-        <button
-          key={diary.id}
-          className="bg-white border border-[#eceef2] rounded-xl flex items-center justify-between px-[17px] py-3.75 shrink-0 text-left hover:bg-[#fafbfc] transition-colors"
-        >
-          <span className="text-[#1c2333] text-[14.6px] font-medium">{diary.name}</span>
-          <span className="text-[#9ca3af] text-[12px] font-normal">{diary.count}</span>
-        </button>
-      ))}
+      {rooms
+        .filter((r) => r.type === 'PRIVATE')
+        .map((room) => (
+          <button
+            key={room.roomId}
+            onClick={() => navigate(`/rooms/${room.roomId}`)}
+            className="bg-white border border-[#eceef2] rounded-xl flex items-center justify-between px-4.25 py-3.75 shrink-0 text-left hover:bg-[#fafbfc] transition-colors"
+          >
+            <span className="text-[#1c2333] text-[14.6px] font-medium">{room.title}</span>
+          </button>
+        ))}
     </div>
   );
 };

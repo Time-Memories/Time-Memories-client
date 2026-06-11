@@ -8,15 +8,22 @@ export interface MiniCalendarProps {
   markedDates?: Date[];
   selectedDate?: Date | null;
   onDateSelect?: (date: Date) => void;
+  onMonthChange?: (year: number, month: number) => void;
 }
 
 export const MiniCalendar = ({
   markedDates = [],
   selectedDate,
   onDateSelect,
+  onMonthChange,
 }: MiniCalendarProps) => {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+
+  const changeMonth = (newDate: Date) => {
+    setViewDate(newDate);
+    onMonthChange?.(newDate.getFullYear(), newDate.getMonth() + 1);
+  };
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -55,13 +62,13 @@ export const MiniCalendar = ({
         </span>
         <div className="flex items-center gap-3.5">
           <button
-            onClick={() => setViewDate(new Date(year, month - 1, 1))}
+            onClick={() => changeMonth(new Date(year, month - 1, 1))}
             className="text-[#4b5563] text-[14px] leading-none px-1"
           >
             ‹
           </button>
           <button
-            onClick={() => setViewDate(new Date(year, month + 1, 1))}
+            onClick={() => changeMonth(new Date(year, month + 1, 1))}
             className="text-[#4b5563] text-[14px] leading-none px-1"
           >
             ›

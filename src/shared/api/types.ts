@@ -28,8 +28,27 @@ export interface ApiErrorInfo {
 }
 
 export interface CursorPaginationParams {
-  lastId?: number;
+  cursor?: number;
   size?: number;
+}
+
+export interface PagePaginationParams {
+  page?: number;
+  size?: number;
+}
+
+export interface PagePaginationResponse<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+}
+
+export interface CursorPaginationResponse<T> {
+  content: T[];
+  nextCursor: number | null;
+  hasNext: boolean;
 }
 
 export type PartialUpdate<T> = Partial<T>;
