@@ -26,6 +26,28 @@ export interface PresignedUrlResponse {
   uploads: UploadInfo[];
 }
 
+const IMAGE_BASE_URL = (
+  (import.meta.env.VITE_IMAGE_BASE_URL as string | undefined) ??
+  'https://d2u0ocp0437og0.cloudfront.net'
+).replace(/\/+$/, '');
+
+export function resolveImageUrl(imageKey: string): string {
+  if (/^https?:\/\//.test(imageKey)) return imageKey;
+  return `${IMAGE_BASE_URL}/${imageKey.replace(/^\/+/, '')}`;
+}
+
+export function getImageKeyFromUrl(imageUrlOrKey: string): string {
+  if (!/^https?:\/\//.test(imageUrlOrKey)) {
+    return imageUrlOrKey.replace(/^\/+/, '');
+  }
+
+  try {
+    return decodeURIComponent(new URL(imageUrlOrKey).pathname.replace(/^\/+/, ''));
+  } catch {
+    return imageUrlOrKey;
+  }
+}
+
 export async function getPresignedUrls(files: FileRequest[]): Promise<UploadInfo[]> {
   const res = await http.post<ApiResponse<PresignedUrlResponse>>(ENDPOINTS.images.presigned, {
     files,

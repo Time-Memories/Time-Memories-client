@@ -12,3 +12,6 @@ export type {
   ErrorFallbackProps,
   SuspenseFallbackProps,
 } from './async-boundary';
+
+export { ConfirmSheet } from './ConfirmSheet';
+export type { ConfirmSheetProps } from './ConfirmSheet';
