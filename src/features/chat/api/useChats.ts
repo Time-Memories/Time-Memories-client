@@ -5,12 +5,22 @@ import { ChatQueryKeys } from './_keys';
 
 export type ChatMessageType = 'TEXT' | 'IMAGE';
 
+const CHAT_IMAGE_BASE_URL = (
+  (import.meta.env.VITE_IMAGE_BASE_URL as string | undefined) ??
+  'https://d2u0ocp0437og0.cloudfront.net'
+).replace(/\/+$/, '');
+
+export function resolveChatImageUrl(imageKey: string): string {
+  if (/^https?:\/\//.test(imageKey)) return imageKey;
+  return `${CHAT_IMAGE_BASE_URL}/${imageKey.replace(/^\/+/, '')}`;
+}
+
 export interface ChatDto {
   chatId: number;
   senderId: number;
   senderName: string;
   type: ChatMessageType;
-  content: string;
+  content: string | null;
   imageKeys: string[];
   createdAt: string;
 }
