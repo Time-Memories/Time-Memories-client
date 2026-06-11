@@ -1,9 +1,10 @@
-export { clearAccessToken, getAccessToken, setAccessToken } from './auth';
+export { getMe } from './auth-api';
 export { ENDPOINTS } from './endpoints';
 export { ApiClientError, toApiClientError, unwrapApiResponse } from './error';
 export { http, setUnauthorizedHandler } from './http';
 export { buildJsonFormData, omitUndefined } from './utils';
 
+export type { GetMeResponseBody } from './auth-api';
 export type {
   ApiErrorInfo,
   ApiResponse,
